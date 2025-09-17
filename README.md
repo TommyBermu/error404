@@ -10,6 +10,6 @@ Aquí subiremos nuestros documentos, código y entregas de forma centralizada.
 - Daniel Alonso Gracia Pinto
 
 ## 📂 Estructura del repositorio  
-- `/tareas` → Entregas individuales y grupales
-- `/codigo` → Scripts o programas de apoyo
-- `/presentaciones` → Diapositivas y material visual
+- `/Asignaciones` → Entregas individuales y grupales
+- `/Documentacion` → Scripts o programas de apoyo
+- `/Proyecto` → Diapositivas y material visual
