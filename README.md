@@ -25,6 +25,8 @@ SAFE es una plataforma integral de aprendizaje y gestión del talento que busca 
 
 📁 **Vista tipo árbol**  
 
+
+```plaintext
 .
 ├── .gitignore
 ├── README.md
@@ -48,4 +50,4 @@ SAFE es una plataforma integral de aprendizaje y gestión del talento que busca 
 │   └── ... (otros documentos si es necesario)
 └── Proyecto
     └── ... (estructura libre según la tecnología utilizada)
-
+```
