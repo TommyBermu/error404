@@ -1,15 +1,51 @@
-# 📚 Grupo error404
+# 🛡️ SAFE: Sistema Académico de Formación Empresarial
 
-Repositorio para organizar y almacenar todos los **archivos, tareas y avances** de la materia.  
-Aquí subiremos nuestros documentos, código y entregas de forma centralizada.  
+## 📖 Descripción  
+SAFE es una plataforma integral de aprendizaje y gestión del talento que busca optimizar la forma en que las organizaciones capacitan y acompañan a sus colaboradores. Permite a cada empleado acceder a cursos y rutas de formación personalizadas, avanzar a su propio ritmo y recibir notificaciones oportunas sobre sus logros y pendientes. Al mismo tiempo, brinda a talento humano las herramientas para administrar usuarios, roles, contenidos y evaluaciones, mientras que supervisores y directivos cuentan con tableros e indicadores claros para dar seguimiento al progreso de sus equipos. De esta manera, SAFE no solo centraliza la formación, sino que convierte el aprendizaje en un proceso continuo, medible y alineado con los objetivos estratégicos de la empresa.
+
+---
 
 ## 👥 Integrantes  
-- Tomas Alejandro Bermudez Guaqueta  
-- Daniel Alfonso Cely Infante
-- David Alejandro Herrera Novoa
-- Daniel Alonso Gracia Pinto
+- Tomás Alejandro Bermúdez Guaqueta  : tbermudezg@unal.edu.co
+- Daniel Alfonso Cely Infante  : dcelyi@unal.edu.co
+- David Alejandro Herrera Novoa  : daherreran@unal.edu.co
+- Daniel Alonso Gracia Pinto  : dagraciap@unal.edu.co
+
+---
 
 ## 📂 Estructura del repositorio  
-- `/Asignaciones` → Entregas individuales y grupales
-- `/Documentacion` → Scripts o programas de apoyo
-- `/Proyecto` → Diapositivas y material visual
+
+📁 **Vista resumida**  
+
+- `/Asignaciones` → Entregas individuales y grupales  
+- `/Documentación` → Casos de uso, diagramas, scripts y materiales de apoyo  
+- `/Proyecto` → Código, diagramas y material visual del desarrollo  
+
+---
+
+📁 **Vista tipo árbol**  
+
+.
+├── .gitignore
+├── README.md
+├── Asignaciones
+│   ├── Tarea_01.pdf
+│   ├── Tarea_02.pdf
+│   ├── Taller_<name>.pdf
+│   └── ... (más archivos según se asignen)
+├── Documentación
+│   ├── Casos de uso
+│   │   ├── CU_<nickname>_01.pdf
+│   │   ├── CU_<nickname>_02.pdf
+│   │   └── ... (más casos de uso)
+│   ├── Proyecto
+│   │   ├── diagramas.md
+│   │   ├── script_implementacion.sql
+│   │   └── ... (documentos relacionados al proyecto)
+│   ├── Diagramas
+│   │   ├── bd.md
+│   │   └── ... (documentos relacionados a diagramas)
+│   └── ... (otros documentos si es necesario)
+└── Proyecto
+    └── ... (estructura libre según la tecnología utilizada)
+
