@@ -1,1 +1,0 @@
-Carpeta de Documentación de Diagramas (temporal)
