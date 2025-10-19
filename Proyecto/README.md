@@ -1,1 +1,0 @@
-Carpeta de Documentación del Proyecto (temporal)

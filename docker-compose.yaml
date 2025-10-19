@@ -1,0 +1,40 @@
+services:
+  web:
+    build: .
+    container_name: django_web
+    working_dir: /app
+    command: sh -c "python manage.py runserver 0.0.0.0:8000 || tail -f /dev/null"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Proyecto/SAFE:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+
+volumes:
+  pg_data:

@@ -51,3 +51,42 @@ SAFE es una plataforma integral de aprendizaje y gestión del talento que busca 
 └── Proyecto
     └── ... (estructura libre según la tecnología utilizada)
 ```
+
+# Instalación y uso
+
+## Requisitos
+
+Este proyecto utiliza Docker para facilitar la instalación y despliegue del software.
+
+- [Docker](https://www.docker.com/get-started) instalado en tu sistema.
+
+## Instalación
+
+1. **Clona el repositorio:**
+    ```bash
+    git clone https://github.com/TommyBermu/error404.git
+    cd error404/Proyecto
+    ```
+
+2. **Configura las variables de entorno (si es necesario):**
+    - Revisa si existe un archivo `.env.example` y renómbralo a `.env`.
+    - Modifica los valores según tu entorno.
+
+3. **Ejecuta el fichero setup.bat:**
+    - Usando Windows:
+      ```bash
+      ./setup.bat
+      ```
+     - Usando MAC/Linux:
+        ```bash
+        chmod +x setup.sh
+        ./setup.sh
+        ```
+
+4. **Accede a la aplicación:**
+    - Abre tu navegador y visita `http://localhost:8000` o el puerto configurado.
+
+## Notas
+
+- Asegúrate de que los puertos necesarios estén libres.
+- Consulta los archivos Docker (`Dockerfile`, `docker-compose.yaml`) para más detalles de configuración.
