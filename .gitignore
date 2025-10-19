@@ -1,5 +1,6 @@
 .DS_Store
 Thumbs.db
+devcontainer.json
 
 *.log
 *.tmp
@@ -12,3 +13,4 @@ __pycache__/
 .env
 .idea/
 .vscode/
+migrations/
