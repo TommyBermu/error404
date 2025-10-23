@@ -8,10 +8,10 @@ def index(request):
 
 @require_POST
 def user_add(request):
-    name = request.POST.get("first_name", "").strip()
+    username = request.POST.get("username", "").strip()
     email = request.POST.get("email", "").strip()
-    if name:
-        models.AppUser.objects.create(first_name=name, email=email)
+    if username:
+        models.AppUser.objects.create(username=username, email=email)
     return redirect("index")
 
 def user_del(request, pk):

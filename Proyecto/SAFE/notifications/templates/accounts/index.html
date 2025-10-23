@@ -26,12 +26,12 @@
 		{% for u in usuarios %}
 		<tr>
 			<td>{{ u.id }}</td>
-			<td>{{ u.name }}</td>
+			<td>{{ u.username }}</td>
 			<td>{{ u.email }}</td>
 			<td>
 				<form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
 					{% csrf_token %}
-					<button onclick="return confirm('¿Eliminar {{u.name}}?')">Eliminar</button>
+					<button onclick="return confirm('¿Eliminar {{u.username}}?')">Eliminar</button>
 				</form>
 			</td>
 		</tr>
