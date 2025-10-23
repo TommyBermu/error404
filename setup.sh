@@ -26,19 +26,6 @@ until docker compose exec -T db pg_isready -U "$DB_USER" >/dev/null 2>&1; do
 done
 echo "PostgreSQL listo."
 
-# 3) Migraciones de Django
-echo "=========================================="
-echo "Configurando base de datos Django..."
-echo "=========================================="
-docker compose exec -T web python manage.py makemigrations core
-docker compose exec -T web python manage.py migrate
-
-# 4) cargar SQL
-if [ -f "Proyecto/SAFE/db/init.sql" ]; then
-  echo "Cargando init.sql..."
-  docker compose exec -T db psql -U "$DB_USER" -d "$DB_NAME" < Proyecto/SAFE/db/init.sql
-fi
-
 echo ""
 echo "============================================"
 echo "   Entorno listo en http://localhost:8000"
