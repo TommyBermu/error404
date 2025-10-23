@@ -11,8 +11,8 @@
 
 	<form method="post" action="{% url 'user_add' %}">
 		{% csrf_token %}
-		<input name="first_name" placeholder="Nombre" required>
-		<input name="email" placeholder="Email (opcional)">
+		<input name="username" placeholder="Nombre" required>
+		<input name="email" placeholder="Email" required>
 		<button>Agregar</button>
 	</form>
 
@@ -26,12 +26,12 @@
 		{% for u in usuarios %}
 		<tr>
 			<td>{{ u.id }}</td>
-			<td>{{ u.first_name }}</td>
+			<td>{{ u.username }}</td>
 			<td>{{ u.email }}</td>
 			<td>
 				<form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
 					{% csrf_token %}
-					<button onclick="return confirm('¿Eliminar {{u.first_name}}?')">Eliminar</button>
+					<button onclick="return confirm('¿Eliminar {{u.username}}?')">Eliminar</button>
 				</form>
 			</td>
 		</tr>
