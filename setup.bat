@@ -31,18 +31,6 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 echo PostgreSQL listo.
 
-REM 3) Migraciones de Django
-echo Aplicando migraciones Django...
-docker compose exec -T web python manage.py makemigrations core
-docker compose exec -T web python manage.py migrate
-docker compose exec -T web bash -lc "python manage.py inspectdb > core/models.py"
-
-REM 4) cargar SQL
-IF EXIST Proyecto\SAFE\db\init.sql (
-  echo Cargando init.sql...
-  docker compose exec -T db psql -U %DB_USER% -d %DB_NAME% < Proyecto\SAFE\db\init.sql
-)
-
 echo ==========================================
 echo   Listo: http://localhost:8000
 echo ==========================================
