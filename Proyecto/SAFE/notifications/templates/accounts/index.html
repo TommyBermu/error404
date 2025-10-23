@@ -1,46 +1,11 @@
-<!doctype html>
-<html>
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-	<meta charset="utf-8">
-	<title>Usuarios</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
 </head>
-
 <body>
-	<h1>Usuarios</h1>
-
-	<form method="post" action="{% url 'user_add' %}">
-		{% csrf_token %}
-		<input name="name" placeholder="Nombre" required>
-		<input name="email" placeholder="Email (opcional)">
-		<button>Agregar</button>
-	</form>
-
-	<table border="1" cellpadding="6" cellspacing="0">
-		<tr>
-			<th>ID</th>
-			<th>Nombre</th>
-			<th>Email</th>
-			<th></th>
-		</tr>
-		{% for u in usuarios %}
-		<tr>
-			<td>{{ u.id }}</td>
-			<td>{{ u.username }}</td>
-			<td>{{ u.email }}</td>
-			<td>
-				<form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
-					{% csrf_token %}
-					<button onclick="return confirm('¿Eliminar {{u.username}}?')">Eliminar</button>
-				</form>
-			</td>
-		</tr>
-		{% empty %}
-		<tr>
-			<td colspan="4">Sin usuarios</td>
-		</tr>
-		{% endfor %}
-	</table>
+	
 </body>
-
 </html>
