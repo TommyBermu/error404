@@ -31,7 +31,46 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 echo PostgreSQL listo.
 
+REM 3) Esperar a que las migraciones de Django terminen
+echo.
 echo ==========================================
+echo Esperando a que las migraciones terminen...
+echo ==========================================
+
+set MAX_ATTEMPTS=20
+set ATTEMPT=0
+
+:wait_django
+set /a ATTEMPT+=1
+
+REM Verificar si Django está corriendo
+docker compose logs web 2>NUL | findstr /C:"Starting development server" >NUL 2>&1
+IF %ERRORLEVEL% EQU 0 (
+  echo Django esta listo
+  goto django_ready
+)
+
+REM Verificar si hay errores
+docker compose logs web 2>NUL | findstr /C:"Error" >NUL 2>&1
+IF %ERRORLEVEL% EQU 0 (
+  echo ERROR: Se detecto un error en las migraciones, revisa los logs
+  pause
+  exit /b 1
+)
+
+REM Timeout check
+IF %ATTEMPT% GEQ %MAX_ATTEMPTS% (
+  echo TIMEOUT: Las migraciones tardaron demasiado, revisa los logs
+  pause
+  exit /b 1
+)
+
+echo   ...aun migrando, reintentando en 2s (intento %ATTEMPT%/%MAX_ATTEMPTS%)
+timeout /t 2 >NUL
+goto wait_django
+
+:django_ready
+echo ================================
 echo   Listo: http://localhost:8000
-echo ==========================================
+echo ================================
 pause
