@@ -11,6 +11,7 @@ services:
       python manage.py makemigrations enrollments &&
       python manage.py migrate &&
       python manage.py runserver 0.0.0.0:8000 || tail -f /dev/null
+      python manage.py collectstatic --noinput
       "
     ports:
       - "8000:8000"
