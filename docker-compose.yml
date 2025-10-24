@@ -9,8 +9,9 @@ services:
       python manage.py makemigrations courses &&
       python manage.py makemigrations learning_paths &&
       python manage.py makemigrations enrollments &&
+      python manage.py makemigrations notifications &&
       python manage.py migrate &&
-      python manage.py runserver 0.0.0.0:8000 || tail -f /dev/null
+      python manage.py runserver 0.0.0.0:8000
       "
     ports:
       - "8000:8000"
