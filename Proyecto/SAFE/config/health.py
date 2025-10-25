@@ -6,4 +6,4 @@ def db_health(request):
     return JsonResponse(
         {"DB Status: ": "Healthy" if ok else "Unhealthy"},
         status=200 if ok else 500,
-    )
+    ) 
