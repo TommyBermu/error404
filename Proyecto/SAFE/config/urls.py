@@ -21,6 +21,7 @@ from .health import db_health
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("health/", db_health, name="health_db"),
+    path("core/", include('core.urls')),
     path("", include('accounts.urls')),
     path("", include('courses.urls')),
     path("", include('enrollments.urls')),

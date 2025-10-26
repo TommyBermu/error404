@@ -4,6 +4,8 @@ services:
     container_name: django_web
     working_dir: /app
     command: sh -c "
+      python manage.py makemigrations core &&
+      python manage.py makemigrations config &&
       python manage.py makemigrations accounts &&
       python manage.py makemigrations teams &&
       python manage.py makemigrations courses &&
@@ -19,6 +21,7 @@ services:
       - ./Proyecto/SAFE:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - DB_HOST=db  
     depends_on:
       db:
         condition: service_healthy
