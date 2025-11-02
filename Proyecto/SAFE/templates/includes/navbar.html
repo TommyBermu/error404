@@ -1,0 +1,14 @@
+{% load static %}
+<header class="safe-navbar">
+    <img src="{% static 'img/safe_logo.jpeg' %}" alt="SAFE Logo" class="logo">
+
+    <nav>
+        <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">My Learning</a>
+        <a href="{% url 'catalog' %}" class="{% if request.resolver_match.url_name == 'catalog' %}active{% endif %}">Catalog</a>
+    </nav>
+    
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem;">
+        <!-- Aqui irían el buscador, notificaciones y perfil -->
+        <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Perfil</a>
+    </div>
+</header>
