@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Administración — SAFE
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'administration/css/admin_panel.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="admin-container">
+    <h1 class="admin-title">Administración</h1>
+
+    <div class="admin-tabs">
+      <a href="?tab=usuarios" class="admin-tab {% if active_tab == 'usuarios' %}active{% endif %}">Usuarios</a>
+      <a href="?tab=cursos" class="admin-tab {% if active_tab == 'cursos' %}active{% endif %}">Cursos</a>
+      <a href="?tab=rutas" class="admin-tab {% if active_tab == 'rutas' %}active{% endif %}">Rutas</a>
+      <a href="?tab=estadisticas" class="admin-tab {% if active_tab == 'estadisticas' %}active{% endif %}">Estadísticas</a>
+    </div>
+
+    <!-- USUARIOS -->
+    {% if active_tab == 'usuarios' %}
+      <div class="tab-panel">
+        <div class="admin-section">
+          <div class="section-header">
+            <h2 class="section-title">Gestión de usuarios</h2>
+            <button class="btn-primary">Nuevo usuario</button>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width:80px">ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th style="width:140px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in usuarios %}
+                <tr>
+                  <td>{{ u.id }}</td>
+                  <td>{{ u.username }}</td>
+                  <td>{{ u.email }}</td>
+                  <td>
+                    <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
+                      {% csrf_token %}
+                      <button class="btn btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td class="empty" colspan="4">Sin usuarios</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- CURSOS -->
+    {% if active_tab == 'cursos' %}
+      <div class="tab-panel">
+        <div class="admin-section">
+          <div class="section-header">
+            <h2 class="section-title">Cursos disponibles</h2>
+            <button class="btn-primary">Nuevo</button>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- RUTAS -->
+    {% if active_tab == 'rutas' %}
+      <div class="tab-panel">
+        <div class="admin-section">
+          <div class="section-header">
+            <h2 class="section-title">Rutas de aprendizaje</h2>
+            <button class="btn-primary">Nueva ruta</button>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- ESTADÍSTICAS -->
+    {% if active_tab == 'estadisticas' %}
+      <div class="tab-panel">
+        <div class="admin-section">
+          <h2 class="section-title">Estadísticas y KPIs</h2>
+          <div class="empty-state">Gráficos y estadísticas aquí</div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
