@@ -6,13 +6,16 @@ from shared.db import Database
 
 db = Database()
 
-def index(request):
+def login(request):
     usuarios = (
         db.manager(models.AppUser)
         .order_by("id")
         .values("id", "username", "email")
     )
-    return render(request, "accounts/index.html", {"usuarios": list(usuarios)})
+    return render(request, "accounts/login.html", {"usuarios": list(usuarios)})
+
+def profile(request):
+    return render(request, "accounts/profile.html")
 
 @require_POST
 def user_add(request):
@@ -21,9 +24,9 @@ def user_add(request):
     if username and email:
         with db.atomic():
             db.manager(models.AppUser).create(username=username, email=email)
-    return redirect("index")
+    return redirect("login")
 
 def user_del(request, pk):
     with db.atomic():
         db.manager(models.AppUser).filter(pk=pk).delete()
-    return redirect("index")
+    return redirect("login")
