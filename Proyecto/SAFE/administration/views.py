@@ -4,9 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from courses.models import Course, Module, Content
 from accounts.models import AppUser
-from shared.db import Database
-
-db = Database()
 
 @login_required
 def admin_panel(request):
@@ -39,6 +36,6 @@ def admin_panel(request):
         'selected_course': selected_course,
         'selected_module': selected_module,
         'learning_paths': learning_paths,
-        'usuarios': db.manager(AppUser).order_by("id").values("id", "username", "email")
+        'usuarios': AppUser.objects.order_by("id").values("id", "username", "email")
     }
     return render(request, 'administration/admin_panel.html', context)
