@@ -1,14 +1,11 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
-from . import models
-
-from shared.db import Database
-
-db = Database()
+from django.db import transaction
+from .models import AppUser
 
 def login(request):
     usuarios = (
-        db.manager(models.AppUser)
+        AppUser.objects
         .order_by("id")
         .values("id", "username", "email")
     )
@@ -22,11 +19,11 @@ def user_add(request):
     username = request.POST.get("username", "").strip()
     email = request.POST.get("email", "").strip()
     if username and email:
-        with db.atomic():
-            db.manager(models.AppUser).create(username=username, email=email)
+        with transaction.atomic():
+            AppUser.objects.create(username=username, email=email)
     return redirect("login")
 
 def user_del(request, pk):
-    with db.atomic():
-        db.manager(models.AppUser).filter(pk=pk).delete()
+    with transaction.atomic():
+        AppUser.objects.filter(pk=pk).delete()
     return redirect("login")
