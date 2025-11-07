@@ -37,7 +37,7 @@ echo ==========================================
 echo Esperando a que las migraciones terminen...
 echo ==========================================
 
-set APPS=accounts teams courses learning_paths enrollments notifications
+set APPS=accounts teams courses learning_paths enrollments notifications administration
 for %%A in (%APPS%) do (
   docker compose exec -T web python manage.py makemigrations %%A
 )

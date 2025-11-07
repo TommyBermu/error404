@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Cursos - SAFE Academy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/course_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <h1>Gestión de Cursos</h1>
+            <p>Administra los cursos de la plataforma</p>
+        </div>
+        <a href="{% url 'course_create' %}" class="btn-primary">
+            Crear Curso
+        </a>
+    </div>
+    
+    <!-- Cursos Grid -->
+    {% if courses %}
+    <div class="courses-grid">
+        {% for course in courses %}
+        <div class="course-card">
+            <!-- Course Header Image -->
+            <div class="course-card-header">
+                {% if course.header_img %}
+                    <img src="{{ course.header_img.url }}" alt="{{ course.name }}">
+                {% else %}
+                    <span class="placeholder-icon">📚</span>
+                {% endif %}
+            </div>
+            
+            <!-- Course Info -->
+            <div class="course-card-body">
+                <div class="card-header-row">
+                    <h3 class="card-title">{{ course.name }}</h3>
+                    <span class="status-badge status-{{ course.status }}">
+                        {{ course.get_status_display }}
+                    </span>
+                </div>
+                
+                <p class="card-description">
+                    {{ course.description|default:"Sin descripción" }}
+                </p>
+                
+                <div class="card-meta">
+                    <span>{{ course.duration_hours|default:"0" }}h</span>
+                    <span>{{ course.modules.count }} módulos</span>
+                </div>
+                
+                <!-- Actions -->
+                <div class="card-actions">
+                    <a href="{% url 'course_detail' course.pk %}" class="btn-secondary">Ver</a>
+                    <a href="{% url 'course_update' course.pk %}" class="btn-secondary">Editar</a>
+                    <a href="{% url 'course_delete' course.pk %}" class="btn-danger-icon">🗑️</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p class="empty-text">No hay cursos creados aún.</p>
+        <a href="{% url 'course_create' %}" class="btn-primary">Crear primer curso</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
