@@ -12,8 +12,8 @@
         "ms-python.vscode-pylance",
         "ms-python.debugpy",
         "batisteo.vscode-django",
-        "mtxr.sqltools",
-        "mtxr.sqltools-driver-pg"
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",

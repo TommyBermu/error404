@@ -22,7 +22,7 @@ urlpatterns = [
     #path("admin/", admin.site.urls),
     path("health/", db_health, name="health_db"),
     path("", include('accounts.urls')),
-    path("", include('administration.urls')),
+    path("admin/", include('administration.urls')),
     path("", include('courses.urls')),
     path("", include('enrollments.urls')),
     path("", include('learning_paths.urls')),
