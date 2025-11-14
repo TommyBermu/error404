@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Agregar Contenido - SAFE Academy
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'administration/css/content_form.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="form-container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="{% url 'course_detail' course.pk %}">← Volver a {{ course.name }}</a>
+    </div>
+
+    <!-- Header -->
+    <div class="form-header">
+      <h1>Agregar Contenido</h1>
+      <p>Añade contenido al módulo "{{ module.name }}"</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Show form errors -->
+        {% if content_form.errors or material_form.errors %}
+          <div class="alert-error">
+            <strong>⚠️ Por favor corrige los siguientes errores:</strong>
+            <ul>
+              {% for field, errors in content_form.errors.items %}
+                {% for error in errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for field, errors in material_form.errors.items %}
+                {% for error in errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <!-- Tipo de contenido -->
+        <div class="form-group">
+          <label for="{{ content_form.content_type.id_for_label }}">Tipo de contenido <span class="required">*</span></label>
+          {{ content_form.content_type }}
+          <div class="field-help">Selecciona el tipo de contenido que deseas agregar.</div>
+        </div>
+
+        <!-- Título del contenido -->
+        <div class="form-group">
+          <label for="{{ content_form.title.id_for_label }}">Título <span class="required">*</span></label>
+          {{ content_form.title }}
+          <div class="field-help">Ejemplo: "Video introductorio", "Lectura sobre el tema", "Examen final"</div>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label for="{{ content_form.description.id_for_label }}">Descripción</label>
+          {{ content_form.description }}
+          <div class="field-help">Describe brevemente el contenido.</div>
+        </div>
+
+        <!-- Obligatorio -->
+        <div class="form-group">
+          <div class="checkbox-group">
+            {{ content_form.is_mandatory }}
+            <label for="{{ content_form.is_mandatory.id_for_label }}">Contenido obligatorio</label>
+          </div>
+          <div class="field-help">Si está marcado, los estudiantes deberán completar este contenido para avanzar.</div>
+        </div>
+
+        <!-- Sección específica para Material -->
+        <div class="form-section" id="material-section">
+          <h3 class="section-title">📄 Detalles del Material</h3>
+          <p class="section-description">Completa esta sección solo si seleccionaste "Material" como tipo de contenido.</p>
+
+          <!-- Tipo de material -->
+          <div class="form-group">
+            <label for="{{ material_form.type.id_for_label }}">Tipo de material</label>
+            {{ material_form.type }}
+            <div class="field-help">Selecciona el formato del archivo.</div>
+          </div>
+
+          <!-- Archivo -->
+          <div class="form-group">
+            <label for="{{ material_form.file.id_for_label }}">Subir archivo</label>
+            {{ material_form.file }}
+            <div class="field-help">Sube un archivo (PDF, MP4, MP3, JPG, TXT) para el material de aprendizaje.</div>
+          </div>
+        </div>
+
+        <!-- Info Boxes para cada tipo -->
+        <div class="info-boxes">
+          <div class="info-box info-material">
+            <span class="info-icon">📄</span>
+            <div>
+              <strong>Material:</strong> Sube archivos como PDFs, videos, audios o imágenes para que los estudiantes estudien.
+            </div>
+          </div>
+          <div class="info-box info-exam">
+            <span class="info-icon">📝</span>
+            <div>
+              <strong>Examen:</strong> Crea evaluaciones con preguntas y respuestas (se configurará después de crear).
+            </div>
+          </div>
+          <div class="info-box info-assignment">
+            <span class="info-icon">📋</span>
+            <div>
+              <strong>Tarea:</strong> Asigna trabajos que los estudiantes deben entregar (se configurará después de crear).
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <a href="{% url 'course_detail' course.pk %}" class="btn-ghost">Cancelar</a>
+          <button type="submit" class="btn-primary">➕ Agregar Contenido</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Simple JS para mostrar/ocultar sección de material
+    document.addEventListener('DOMContentLoaded', function () {
+      const contentTypeSelect = document.querySelector('#id_content_type')
+      const materialSection = document.getElementById('material-section')
+    
+      function toggleMaterialSection() {
+        if (contentTypeSelect.value === 'material') {
+          materialSection.style.display = 'block'
+        } else {
+          materialSection.style.display = 'none'
+        }
+      }
+    
+      contentTypeSelect.addEventListener('change', toggleMaterialSection)
+      toggleMaterialSection() // Ejecutar al cargar
+    })
+  </script>
+{% endblock %}

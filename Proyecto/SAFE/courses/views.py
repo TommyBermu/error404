@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from .models import Course, Module, Content, Exam, Assignment, Material
 
 
+@login_required
 def catalog(request):
     courses = Course.objects.filter(status=Course.CourseStatus.ACTIVE).order_by(
         "-created_at"

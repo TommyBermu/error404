@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {{ course.name }} - SAFE Academy
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'administration/css/course_detail.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="{% url 'admin_panel' %}?tab=cursos">← Volver a Administración</a>
+    </div>
+
+    <!-- Course Header -->
+    <div class="course-header">
+      <div class="course-header-content">
+        <h1>{{ course.name }}</h1>
+        <span class="status-badge status-{{ course.status }}">{{ course.get_status_display }}</span>
+      </div>
+      <div class="course-header-actions">
+        <a href="{% url 'course_update' course.pk %}" class="btn-secondary">Editar Metadatos</a>
+        <a class="btn-danger">Eliminar Curso</a>
+      </div>
+    </div>
+
+    <!-- Course Info Card -->
+    <div class="info-card">
+      <div class="info-row">
+        <div class="info-item">
+          <span class="info-label">Descripción</span>
+          <p class="info-value">{{ course.description|default:'Sin descripción' }}</p>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-item">
+          <span class="info-label">Duración</span>
+          <span class="info-value">{{ course.duration_hours|default:'--' }} horas</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Módulos</span>
+          <span class="info-value">{{ modules.count }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Creado por</span>
+          <span class="info-value">{{ course.created_by.username|default:'--' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Fecha de creación</span>
+          <span class="info-value">{{ course.created_at|date:'d/m/Y' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modules Section -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">Módulos del Curso</h2>
+        <a href="{% url 'module_create' course.pk %}" class="btn-primary">+ Agregar Módulo</a>
+      </div>
+
+      {% if modules %}
+        <div class="modules-list">
+          {% for module in modules %}
+            <div class="module-card">
+              <div class="module-header">
+                <div class="module-info">
+                  <h3 class="module-title">{{ forloop.counter }}. {{ module.name }}</h3>
+                  <p class="module-description">{{ module.description|default:'Sin descripción' }}</p>
+                </div>
+                <div class="module-meta">
+                  <span class="meta-item">{{ module.duration_hours|default:'--' }}h</span>
+                  <span class="meta-item">{{ module.contents.count }} contenido(s)</span>
+                </div>
+              </div>
+
+              <!-- Module Actions -->
+              <div class="module-actions">
+                <a href="{% url 'content_create' module.pk %}" class="btn-small btn-secondary">+ Agregar Contenido</a>
+                <a class="btn-small btn-danger">Eliminar</a>
+              </div>
+
+              <!-- Module Contents -->
+              {% if module.contents.all %}
+                <div class="contents-list">
+                  <h4 class="contents-title">Contenidos:</h4>
+                  {% for content in module.contents.all %}
+                    <div class="content-item">
+                      <span class="content-badge badge-{{ content.content_type }}">
+                        {% if content.content_type == 'exam' %}
+                          Examen
+                        {% elif content.content_type == 'assignment' %}
+                          Tarea
+                        {% elif content.content_type == 'material' %}
+                          Material
+                        {% endif %}
+                      </span>
+                      <div class="content-info">
+                        <span class="content-title">{{ content.title }}</span>
+                        {% if content.is_mandatory %}
+                          <span class="mandatory-badge">Obligatorio</span>
+                        {% endif %}
+                      </div>
+                      <span class="content-description">{{ content.description|truncatewords:15 }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <div class="empty-state-small">
+                  <p>Este módulo no tiene contenido aún</p>
+                  <a href="{% url 'content_create' module.pk %}" class="link-small">Agregar contenido →</a>
+                </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p class="empty-text">Este curso no tiene módulos aún</p>
+          <a href="{% url 'module_create' course.pk %}" class="btn-primary">Crear primer módulo</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,4 +1,3 @@
-from django.views.decorators.http import require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -31,21 +30,17 @@ def admin_panel(request):
 
     learning_paths = []
 
+    usuarios = AppUser.objects.order_by("id").values("id", "username", "email")
+
     context = {
         "active_tab": active_tab,
         "courses": courses,
         "selected_course": selected_course,
         "selected_module": selected_module,
         "learning_paths": learning_paths,
-        "usuarios": AppUser.objects.order_by("id").values("id", "username", "email"),
+        "usuarios": usuarios,
     }
     return render(request, "administration/admin_panel.html", context)
-
-
-@login_required
-def course_list(request):
-    courses = Course.objects.all().order_by("-created_at")
-    return render(request, "courses/course_list.html", {"courses": courses})
 
 
 @login_required
@@ -62,7 +57,9 @@ def course_create(request):
         form = CourseForm()
 
     return render(
-        request, "courses/course_form.html", {"form": form, "title": "Crear Curso"}
+        request,
+        "administration/course_form.html",
+        {"form": form, "title": "Crear Curso"},
     )
 
 
@@ -72,7 +69,9 @@ def course_detail(request, pk):
     modules = course.modules.all().order_by("id")
 
     return render(
-        request, "courses/course_detail.html", {"course": course, "modules": modules}
+        request,
+        "administration/course_detail.html",
+        {"course": course, "modules": modules},
     )
 
 
@@ -91,7 +90,7 @@ def course_update(request, pk):
 
     return render(
         request,
-        "courses/course_form.html",
+        "administration/course_form.html",
         {"form": form, "title": "Editar Curso", "course": course},
     )
 
@@ -104,9 +103,11 @@ def course_delete(request, pk):
         course_name = course.name
         course.delete()
         messages.success(request, f"Curso '{course_name}' eliminado")
-        return redirect("course_list")
+        return redirect("admin_panel")
 
-    return render(request, "courses/course_confirm_delete.html", {"course": course})
+    return render(
+        request, "administration/course_confirm_delete.html", {"course": course}
+    )
 
 
 # vistas de modulos
@@ -129,7 +130,7 @@ def module_create(request, course_pk):
 
     return render(
         request,
-        "courses/module_form.html",
+        "administration/module_form.html",
         {"form": form, "course": course, "title": "Agregar Módulo"},
     )
 
@@ -146,7 +147,7 @@ def module_delete(request, pk):
 
     return render(
         request,
-        "courses/module_confirm_delete.html",
+        "administration/module_confirm_delete.html",
         {"module": module, "course": course},
     )
 
@@ -192,7 +193,7 @@ def content_create(request, module_pk):
 
     return render(
         request,
-        "courses/content_form.html",
+        "administration/content_form.html",
         {
             "content_form": content_form,
             "material_form": material_form,
