@@ -26,7 +26,7 @@ IF "%DB_NAME%"=="" set DB_NAME=SAFE_db
 :wait_pg
 docker compose exec -T db pg_isready -U %DB_USER% >NUL 2>&1
 IF %ERRORLEVEL% NEQ 0 (
-  timeout /t 2 >NUL
+  ping -n 2 127.0.0.1 >NUL
   goto wait_pg
 )
 echo PostgreSQL listo.
@@ -66,7 +66,7 @@ IF %ATTEMPT% GEQ %MAX_ATTEMPTS% (
 )
 
 echo   ...aun migrando, reintentando en 2s (intento %ATTEMPT%/%MAX_ATTEMPTS%)
-timeout /t 2 >NUL
+ping -n 2 127.0.0.1 >NUL
 goto wait_django
 
 :django_ready
