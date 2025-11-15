@@ -46,7 +46,7 @@
                 <td>
                   <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
                     {% csrf_token %}
-                    <a class="btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</a>
+                    <button type="submit" class="btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</button>
                   </form>
                 </td>
               </tr>
@@ -81,7 +81,7 @@
                 </div>
                 <p class="course-description">{{ course.description|default:'Sin descripción' }}</p>
                 <div class="course-meta">
-                  <span>{{ course.duration_hours }}h</span>
+                  <span>{{ course.duration_hours|default:'--' }}h</span>
                   <span>{{ course.modules.count }} módulos</span>
                 </div>
                 <div class="course-actions">
