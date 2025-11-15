@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.http import HttpResponse
+from django.urls import reverse
+from django.db import transaction
 from courses.models import Course, Module, Content, Exam, Assignment, Material
 from accounts.models import AppUser
 from django.contrib import messages
@@ -66,13 +69,30 @@ def course_create(request):
 @login_required
 def course_detail(request, pk):
     course = get_object_or_404(Course, pk=pk)
-    modules = course.modules.all().order_by("id")
+    modules = course.modules.all().order_by("id")  # pyright: ignore[reportAttributeAccessIssue]
 
-    return render(
-        request,
-        "administration/course_detail.html",
-        {"course": course, "modules": modules},
-    )
+    selected_module = None
+    module_id = request.GET.get("module")
+    if module_id:
+        try:
+            selected_module = modules.get(pk=module_id)
+        except Module.DoesNotExist:
+            selected_module = None
+
+    # forms for inline use
+    module_form = ModuleForm()
+    content_form = ContentForm()
+    material_form = MaterialForm()
+
+    context = {
+        "course": course,
+        "modules": modules,
+        "selected_module": selected_module,
+        "module_form": module_form,
+        "content_form": content_form,
+        "material_form": material_form,
+    }
+    return render(request, "administration/course_detail.html", context)
 
 
 @login_required
@@ -100,14 +120,11 @@ def course_delete(request, pk):
     course = get_object_or_404(Course, pk=pk)
 
     if request.method == "POST":
-        course_name = course.name
         course.delete()
-        messages.success(request, f"Curso '{course_name}' eliminado")
+        messages.success(request, f"Curso '{course.name}' eliminado")
         return redirect("admin_panel")
 
-    return render(
-        request, "administration/course_confirm_delete.html", {"course": course}
-    )
+    return render(request, "administration/admin_panel.html")
 
 
 # vistas de modulos
@@ -124,7 +141,11 @@ def module_create(request, course_pk):
             module.course = course
             module.save()
             messages.success(request, f"Módulo '{module.name}' agregado")
-            return redirect("course_detail", pk=course.pk)
+            # redirigir y seleccionar el módulo creado
+            return redirect(
+                reverse("course_detail", kwargs={"pk": course.pk})
+                + f"?module={module.pk}"
+            )
     else:
         form = ModuleForm()
 
@@ -136,20 +157,15 @@ def module_create(request, course_pk):
 
 
 @login_required
+@require_POST
 def module_delete(request, pk):
     module = get_object_or_404(Module, pk=pk)
-    course = module.course
+    course_pk = module.course.pk
 
-    if request.method == "POST":
+    with transaction.atomic():
         module.delete()
-        messages.success(request, "Módulo eliminado")
-        return redirect("course_detail", pk=course.pk)
-
-    return render(
-        request,
-        "administration/module_confirm_delete.html",
-        {"module": module, "course": course},
-    )
+    messages.success(request, "Módulo eliminado")
+    return redirect("course_detail", pk=course_pk)
 
 
 # vista de contenido
@@ -186,7 +202,10 @@ def content_create(request, module_pk):
 
             content.save()
             messages.success(request, "Contenido agregado al módulo.")
-            return redirect("course_detail", pk=module.course.pk)
+            return redirect(
+                reverse("course_detail", kwargs={"pk": module.course.pk})
+                + f"?module={module.pk}"
+            )
     else:
         content_form = ContentForm()
         material_form = MaterialForm()

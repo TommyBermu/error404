@@ -23,6 +23,7 @@ def user_add(request):
     return redirect("login")
 
 
+@require_POST
 def user_del(request, pk):
     with transaction.atomic():
         AppUser.objects.filter(pk=pk).delete()

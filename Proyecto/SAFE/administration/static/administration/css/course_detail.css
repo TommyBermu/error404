@@ -152,6 +152,41 @@
     border-color: var(--safe-gold);
 }
 
+.module-card.selected {
+    border-color: var(--safe-gold);
+    box-shadow: 0 4px 12px rgba(15, 23, 32, 0.08);
+}
+
+.module-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.module-card-link {
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.module-card-link:hover .module-title {
+    color: var(--safe-gold);
+}
+
+.module-delete-form {
+    flex-shrink: 0;
+}
+
+.module-delete-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .module-header {
     display: flex;
     justify-content: space-between;
