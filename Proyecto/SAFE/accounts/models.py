@@ -41,3 +41,33 @@ class AppUser(AbstractUser):
     
     def __str__(self):
         return f"{self.first_name} ({self.email})"
+    
+class RoleChangeLog(models.Model):
+    """Registro histórico de cambios de rol"""
+
+    changed_by = models.ForeignKey(
+        'accounts.AppUser',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='role_changes_made'
+    )
+    target_user = models.ForeignKey(
+        'accounts.AppUser',
+        on_delete=models.CASCADE,
+        related_name='role_changes_received'
+    )
+    old_role = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True
+    )
+    new_role = models.CharField(max_length=20)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'role_change_log'
+        verbose_name = "Cambio de Rol"
+        verbose_name_plural = "Cambios de Rol"
+
+    def __str__(self):
+        return f"{self.changed_by} cambió {self.target_user} de {self.old_role} a {self.new_role}"

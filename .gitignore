@@ -14,3 +14,11 @@ __pycache__/
 .vscode/
 migrations/
 temp/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+coverage.json
+# Pytest
+.pytest_cache/
