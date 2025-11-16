@@ -141,12 +141,23 @@ class Content(models.Model):
         ASSIGNMENT = "assignment", "Tarea"
         MATERIAL = "material", "Material"
 
+    class BlockType(models.TextChoices):
+        TEXT = "text", "Texto"
+        IMAGE = "image", "Imagen"
+        VIDEO = "video", "Video"
+        PDF = "pdf", "PDF"
+        QUIZ = "quiz", "Cuestionario"
+
     module = models.ForeignKey(
         Module, on_delete=models.CASCADE, related_name="contents"
     )
     title = models.CharField(max_length=150)
     description = models.TextField(blank=True)
     content_type = models.CharField(max_length=20, choices=ContentType.choices)
+    block_type = models.CharField(
+        max_length=20, choices=BlockType.choices, default=BlockType.TEXT
+    )
+    order = models.PositiveIntegerField(default=0)
 
     # Relación polimórfica
     exam = models.ForeignKey(

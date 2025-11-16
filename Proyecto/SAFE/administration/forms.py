@@ -73,7 +73,7 @@ class ModuleForm(forms.ModelForm):
 class ContentForm(forms.ModelForm):
     class Meta:
         model = Content
-        fields = ["title", "description", "content_type", "is_mandatory"]
+        fields = ["title", "description", "block_type", "is_mandatory"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -88,7 +88,7 @@ class ContentForm(forms.ModelForm):
                     "rows": 4,
                 }
             ),
-            "content_type": forms.Select(
+            "block_type": forms.Select(
                 attrs={
                     "class": "w-full",
                 }
@@ -102,7 +102,7 @@ class ContentForm(forms.ModelForm):
         labels = {
             "title": "Título",
             "description": "Descripción",
-            "content_type": "Tipo de contenido",
+            "block_type": "Tipo de bloque",
             "is_mandatory": "Contenido obligatorio",
         }
 

@@ -14,186 +14,381 @@
     <div class="breadcrumb">
       <a href="{% url 'admin_panel' %}?tab=cursos">← Volver a Administración</a>
     </div>
-    <!-- header -->
-    <div class="course-header">
-      <div class="course-header-content">
-        <h1>{{ course.name }}</h1>
-        <span class="status-badge status-{{ course.status }}">{{ course.get_status_display }}</span>
+    <div class="course-summary">
+      <div class="course-header">
+        <div class="course-header-content">
+          <h1>{{ course.name }}</h1>
+          <span class="status-badge status-{{ course.status }}">{{ course.get_status_display }}</span>
+        </div>
+        <div class="course-header-actions">
+          <a href="{% url 'course_update' course.pk %}" class="btn-secondary">Editar Metadatos</a>
+          <form method="post" action="{% url 'course_delete' course.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger" onclick="return confirm('¿Eliminar {{ course.name }}?')">Eliminar Curso</button>
+          </form>
+        </div>
       </div>
-      <div class="course-header-actions">
-        <a href="{% url 'course_update' course.pk %}" class="btn-secondary">Editar Metadatos</a>
-        <form method="post" action="{% url 'course_delete' course.pk %}" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="btn-danger" onclick="return confirm('¿Eliminar {{ course.name }}?')">Eliminar Curso</button>
-        </form>
-      </div>
-    </div>
 
-    <!-- Course Info Card -->
-    <div class="info-card">
-      <div class="info-row">
-        <div class="info-item">
-          <span class="info-label">Descripción</span>
-          <p class="info-value">{{ course.description|default:'Sin descripción' }}</p>
+      <div class="info-card">
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Descripción</span>
+            <p class="info-value">{{ course.description|default:'Sin descripción' }}</p>
+          </div>
         </div>
-      </div>
-      <div class="info-row">
-        <div class="info-item">
-          <span class="info-label">Duración</span>
-          <span class="info-value">{{ course.duration_hours|default:'--' }} horas</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Módulos</span>
-          <span class="info-value">{{ modules.count }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Creado por</span>
-          <span class="info-value">{{ course.created_by.username|default:'--' }}</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Fecha de creación</span>
-          <span class="info-value">{{ course.created_at|date:'d/m/Y' }}</span>
+        <div class="info-row">
+          <div class="info-item">
+            <span class="info-label">Duración</span>
+            <span class="info-value">{{ course.duration_hours|default:'--' }} horas</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Módulos</span>
+            <span class="info-value">{{ modules.count }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Creado por</span>
+            <span class="info-value">{{ course.created_by.username|default:'--' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Fecha de creación</span>
+            <span class="info-value">{{ course.created_at|date:'d/m/Y' }}</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="container" style="display:flex;gap:10px;flex-wrap:wrap;">
-    <!-- Modules -->
-    <div style="flex:1 1 15%; min-width:320px;">
-      <div class="section-header" style="align-items:center;">
-        <h2 class="section-title">Módulos</h2>
-      </div>
-
-      <div style="border:1px solid var(--safe-border); border-radius:12px; padding:14px; background:white;">
-        <!-- Lista de módulos -->
-        <div class="modules-list" id="modules-list">
-          {% for module in modules %}
-            <div class="module-card {% if selected_module and selected_module.pk == module.pk %}selected{% endif %}">
-              <div class="module-header">
-                <a href="{% url 'course_detail' course.pk %}?module={{ module.pk }}" class="module-card-link" aria-label="Ver módulo {{ module.name }}">
-                  <div class="module-info">
-                    <h3 class="module-title">{{ forloop.counter }}. {{ module.name }}</h3>
-                    <p class="module-description">{{ module.contents.count }} contenido(s)</p>
-                  </div>
-                </a>
-                <form method="post" action="{% url 'module_delete' module.pk %}" class="module-delete-form" onsubmit="return confirm('¿Eliminar {{ module.name }}?');">
-                  {% csrf_token %}
-                  <button type="submit" class="btn-danger module-delete-btn" aria-label="Eliminar módulo {{ module.name }}">X</button>
-                </form>
-              </div>
-            </div>
-          {% empty %}
-            <div class="empty-state-small">No hay módulos aún.</div>
-          {% endfor %}
-        </div>
-
-        <!-- Inline module creation -->
-        <form method="post" action="{% url 'module_create' course.pk %}" class="inline-module-form" style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-          {% csrf_token %}
-          {{ module_form.name }} <!-- renderizado simple: widget ya trae placeholder/class -->
-          <button type="submit" class="btn-primary" title="Agregar módulo" style="padding:10px 14px;border-radius:8px;background:var(--safe-gold);color:var(--safe-dark);">+</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Contents for selected module -->
-    <div style="flex:1 1 50%; min-width:320px;">
-      <div class="section-header">
-        <h2 class="section-title">Contenidos del módulo</h2>
-      </div>
-
-      <div style="border:1px solid var(--safe-border); border-radius:12px; padding:14px; background:white;">
-        {% if selected_module %}
-          <div style="background:#f8fafb;padding:12px;border-radius:8px;margin-bottom:12px;">
-            <div style="font-size:13px;color:var(--safe-ink2)">Módulo seleccionado:</div>
-            <div style="font-weight:700">{{ selected_module.name }}</div>
+  <div class="container course-body">
+    <div class="container">
+      <div class="course-layout">
+        <section class="modules-panel">
+          <div class="section-header">
+            <h2 class="section-title">Módulos</h2>
           </div>
 
-          <!-- Lista de contenidos -->
-          <div class="contents-list" style="margin-bottom:12px;">
-            {% for content in selected_module.contents.all %}
-              <div class="content-item" style="display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #f1f5f9;border-radius:8px;margin-bottom:8px;">
-                <span class="content-badge badge-{{ content.content_type }}" style="flex-shrink:0;">
-                  {% if content.content_type == 'exam' %}
-                    📝 Examen
-                  {% elif content.content_type == 'assignment' %}
-                    📋 Tarea
-                  {% elif content.content_type == 'material' %}
-                    📄 Material
-                  {% else %}
-                    Contenido
-                  {% endif %}
-                </span>
-                <div style="flex:1;">
-                  <div style="font-weight:600;">{{ content.title }}</div>
-                  <div style="font-size:13px;color:var(--safe-ink2)">{{ content.description|truncatewords:18 }}</div>
+          <div class="modules-list" id="modules-list">
+            {% for module in modules %}
+              <div class="module-card {% if selected_module and selected_module.pk == module.pk %}selected{% endif %}">
+                <div class="module-header">
+                  <a href="{% url 'course_detail' course.pk %}?module={{ module.pk }}" class="module-card-link" aria-label="Ver módulo {{ module.name }}">
+                    <div class="module-info">
+                      <h3 class="module-title">{{ forloop.counter }}. {{ module.name }}</h3>
+                      <p class="module-description">{{ module.contents.count }} contenido(s)</p>
+                    </div>
+                  </a>
+                  <form method="post" action="{% url 'module_delete' module.pk %}" class="module-delete-form" onsubmit="return confirm('¿Eliminar {{ module.name }}?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger module-delete-btn" aria-label="Eliminar módulo {{ module.name }}">X</button>
+                  </form>
                 </div>
               </div>
             {% empty %}
-              <div class="empty-state-small">No hay contenidos en este módulo.</div>
+              <div class="empty-state-small">No hay módulos aún.</div>
             {% endfor %}
           </div>
 
-          <!-- Inline content creation form -->
-          <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}">
+          <form method="post" action="{% url 'module_create' course.pk %}" class="inline-module-form">
             {% csrf_token %}
-            <div style="margin-bottom:8px;">
-              <label style="display:block;font-weight:600;margin-bottom:6px;">Tipo de contenido</label>
-              {{ content_form.content_type }}
-            </div>
-
-            <div style="margin-bottom:8px;">
-              <label style="display:block;font-weight:600;margin-bottom:6px;">Título</label>
-              {{ content_form.title }}
-            </div>
-
-            <div style="margin-bottom:8px;">
-              <label style="display:block;font-weight:600;margin-bottom:6px;">Descripción</label>
-              {{ content_form.description }}
-            </div>
-
-            <!-- Material fields (file) -->
-            <div style="margin-bottom:12px;">
-              <label style="display:block;font-weight:600;margin-bottom:6px;">Archivo (si aplica)</label>
-              {{ material_form.file }}
-            </div>
-
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-              <a href="{% url 'course_detail' course.pk %}" class="btn-ghost">Cancelar</a>
-              <button type="submit" class="btn-primary">Agregar contenido</button>
-            </div>
+            {{ module_form.name }}
+            <button type="submit" class="btn-primary" title="Agregar módulo">+</button>
           </form>
-        {% else %}
-          <div class="empty-state-small">Selecciona un módulo a la izquierda para ver y agregar contenidos.</div>
-        {% endif %}
+        </section>
+
+        <section class="contents-panel">
+          <div class="section-header">
+            <h2 class="section-title">Contenidos del módulo</h2>
+          </div>
+
+          {% if selected_module %}
+            {% if module_contents %}
+              <div class="content-columns">
+                <div class="content-carousel inline-editing">
+                  <div class="carousel-header">
+                    <p class="carousel-count">{{ module_contents|length }} bloque(s)</p>
+                    <div class="carousel-controls">
+                      <button type="button" class="btn btn-secondary" data-carousel-btn="prev">▲</button>
+                      <button type="button" class="btn btn-secondary" data-carousel-btn="next">▼</button>
+                    </div>
+                  </div>
+                  <div class="content-notebook" id="content-notebook">
+                    {% for content in module_contents %}
+                      <article id="content-block-{{ content.pk }}" class="content-block content-block--{{ content.block_type }} {% if selected_content and selected_content.pk == content.pk %}is-active{% endif %}">
+                        <div class="content-block__header">
+                          <div>
+                            <p class="content-block__order">Bloque {{ forloop.counter }}</p>
+                            <h3 class="content-block__title">{{ content.title }}</h3>
+                          </div>
+                          <div class="content-block__tags">
+                            <span class="content-type-pill">
+                              {% if content.block_type == 'text' %}
+                                Texto
+                              {% elif content.block_type == 'image' %}
+                                Imagen
+                              {% elif content.block_type == 'video' %}
+                                Video
+                              {% elif content.block_type == 'pdf' %}
+                                PDF
+                              {% elif content.block_type == 'quiz' %}
+                                Cuestionario
+                              {% else %}
+                                Contenido
+                              {% endif %}
+                            </span>
+                            {% if content.is_mandatory %}
+                              <span class="mandatory-chip">Obligatorio</span>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="content-block__body">
+                          {% if content.block_type == 'text' %}
+                            <div class="content-text">{{ content.description|linebreaks }}</div>
+                          {% elif content.block_type == 'image' %}
+                            {% if content.material and content.material.file %}
+                              <img src="{{ content.material.file.url }}" alt="{{ content.title }}" class="content-image" loading="lazy" />
+                            {% else %}
+                              <p class="content-empty">Imagen no disponible.</p>
+                            {% endif %}
+                          {% elif content.block_type == 'video' %}
+                            {% if content.material and content.material.file %}
+                              <video controls class="content-video">
+                                <source src="{{ content.material.file.url }}" type="video/{{ content.material.type|default:'mp4' }}" />Tu navegador no soporta video HTML5.
+                              </video>
+                            {% else %}
+                              <p class="content-empty">Video no disponible.</p>
+                            {% endif %}
+                          {% elif content.block_type == 'pdf' %}
+                            {% if content.material and content.material.file %}
+                              <iframe src="{{ content.material.file.url }}#view=FitH" class="content-pdf" title="{{ content.title }}"></iframe>
+                              <a href="{{ content.material.file.url }}" target="_blank" rel="noopener" class="link-small">Abrir PDF en nueva pestaña</a>
+                            {% else %}
+                              <p class="content-empty">Archivo PDF no disponible.</p>
+                            {% endif %}
+                          {% elif content.block_type == 'quiz' %}
+                            {% if content.exam and content.exam.questions %}
+                              <div class="quiz-block">
+                                {% for question in content.exam.questions %}
+                                  <div class="quiz-question">
+                                    <strong>Pregunta {{ forloop.counter }}</strong>
+                                    <p>{{ question.question|default:question }}</p>
+                                  </div>
+                                {% endfor %}
+                              </div>
+                            {% elif content.exam %}
+                              <p class="content-empty">Aún no hay preguntas para este cuestionario.</p>
+                            {% else %}
+                              <p class="content-empty">Crea un cuestionario para este bloque.</p>
+                            {% endif %}
+                          {% else %}
+                            <p class="content-empty">No hay vista disponible para este bloque.</p>
+                          {% endif %}
+                        </div>
+
+                        <div class="content-block__actions">
+                          {% if selected_content and selected_content.pk == content.pk and content_edit_form %}
+                            <a href="{% url 'course_detail' course.pk %}?module={{ selected_module.pk }}#content-block-{{ content.pk }}" class="btn-tertiary btn-small">Cerrar</a>
+                          {% else %}
+                            <a href="{% url 'course_detail' course.pk %}?module={{ selected_module.pk }}&content={{ content.pk }}#content-block-{{ content.pk }}" class="btn-secondary btn-small">Editar</a>
+                          {% endif %}
+                        </div>
+
+                        {% if selected_content and selected_content.pk == content.pk and content_edit_form %}
+                          <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor">
+                            {% csrf_token %}
+                            <div class="form-grid">
+                              <div class="form-field">
+                                <label>Tipo de bloque</label>
+                                {{ content_edit_form.block_type }}
+                              </div>
+                              <div class="form-field">
+                                <label>Título</label>
+                                {{ content_edit_form.title }}
+                              </div>
+                              <div class="form-field form-field-full">
+                                <label>Texto</label>
+                                {{ content_edit_form.description }}
+                              </div>
+                              <div class="form-field">
+                                <label>Archivo (imagen/video/pdf)</label>
+                                {{ material_edit_form.file }}
+                                <small class="field-hint">Solo para bloques multimedia.</small>
+                              </div>
+                              <div class="form-field checkbox-field">
+                                <label class="checkbox-label">
+                                  {{ content_edit_form.is_mandatory }}
+                                  <span>Marcar como obligatorio</span>
+                                </label>
+                              </div>
+                            </div>
+                            <div class="content-form__actions">
+                              <button type="submit" class="btn-primary">Actualizar bloque</button>
+                            </div>
+                          </form>
+                        {% endif %}
+                      </article>
+                    {% endfor %}
+
+                    {% if not selected_content %}
+                      <div class="add-content-wrapper">
+                        <button type="button" class="btn-primary add-content-toggle" data-create-toggle>+ Agregar contenido</button>
+                        <article class="content-block content-block--new is-collapsed" id="content-block-new" data-create-panel>
+                          <div class="content-block__header">
+                            <div>
+                              <p class="content-block__order">Nuevo bloque</p>
+                              <h3 class="content-block__title">Formulario de creación</h3>
+                            </div>
+                          </div>
+                          <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form inline-editor" data-create-form>
+                            {% csrf_token %}
+                            <div class="form-grid">
+                              <div class="form-field">
+                                <label>Tipo de bloque</label>
+                                {{ content_form.block_type }}
+                              </div>
+                              <div class="form-field">
+                                <label>Título</label>
+                                {{ content_form.title }}
+                              </div>
+                              <div class="form-field form-field-full">
+                                <label>Texto</label>
+                                {{ content_form.description }}
+                              </div>
+                              <div class="form-field">
+                                <label>Archivo (imagen/video/pdf)</label>
+                                {{ material_form.file }}
+                                <small class="field-hint">Solo necesario para bloques multimedia.</small>
+                              </div>
+                              <div class="form-field checkbox-field">
+                                <label class="checkbox-label">
+                                  {{ content_form.is_mandatory }}
+                                  <span>Marcar como obligatorio</span>
+                                </label>
+                              </div>
+                            </div>
+                            <div class="content-form__actions">
+                              <button type="submit" class="btn-primary">Crear bloque</button>
+                            </div>
+                          </form>
+                        </article>
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="empty-state-small">No hay contenidos en este módulo.</div>
+              <div class="inspector-card" style="margin-top:16px;">
+                <h4 class="inspector-subtitle">Agregar el primer bloque</h4>
+                <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form">
+                  {% csrf_token %}
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label>Tipo de bloque</label>
+                      {{ content_form.block_type }}
+                    </div>
+                    <div class="form-field">
+                      <label>Título</label>
+                      {{ content_form.title }}
+                    </div>
+                    <div class="form-field form-field-full">
+                      <label>Texto</label>
+                      {{ content_form.description }}
+                    </div>
+                    <div class="form-field">
+                      <label>Archivo (imagen/video/pdf)</label>
+                      {{ material_form.file }}
+                      <small class="field-hint">Solo necesario para bloques multimedia.</small>
+                    </div>
+                    <div class="form-field checkbox-field">
+                      <label class="checkbox-label">
+                        {{ content_form.is_mandatory }}
+                        <span>Marcar como obligatorio</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="content-form__actions">
+                    <button type="submit" class="btn-primary">Agregar contenido</button>
+                  </div>
+                </form>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="empty-state-small">Selecciona un módulo a la izquierda para ver y agregar contenidos.</div>
+          {% endif %}
+        </section>
       </div>
     </div>
-  </div>
 
-  <!-- Reuse delete modal (if not already present globally) -->
-  <div id="delete-modal" class="confirm-overlay" style="display:none;">
-    <div class="confirm-card">
-      <div class="warning-icon">⚠️</div>
-      <h1 class="confirm-title">¿Eliminar?</h1>
+    <!-- Reuse delete modal (if not already present globally) -->
+    <div id="delete-modal" class="confirm-overlay" style="display:none;">
+      <div class="confirm-card">
+        <div class="warning-icon">⚠️</div>
+        <h1 class="confirm-title">¿Eliminar?</h1>
 
-      <div id="delete-entity-info" class="course-info">
-        <h2 id="delete-entity-name" class="course-name"></h2>
-        <div id="delete-entity-meta" class="course-meta"></div>
-      </div>
-
-      <div class="warning-box">
-        <strong>⚠️ Esta acción no se puede deshacer</strong>
-        <p>Al eliminar esto, se eliminarán todos los elementos asociados.</p>
-      </div>
-
-      <form id="delete-form" method="post" action="">
-        {% csrf_token %}
-        <div class="form-actions">
-          <button type="button" id="delete-cancel" class="btn-secondary">← Cancelar</button>
-          <button type="submit" class="btn-danger">🗑️ Sí, eliminar</button>
+        <div id="delete-entity-info" class="course-info">
+          <h2 id="delete-entity-name" class="course-name"></h2>
+          <div id="delete-entity-meta" class="course-meta"></div>
         </div>
-      </form>
+
+        <div class="warning-box">
+          <strong>⚠️ Esta acción no se puede deshacer</strong>
+          <p>Al eliminar esto, se eliminarán todos los elementos asociados.</p>
+        </div>
+
+        <form id="delete-form" method="post" action="">
+          {% csrf_token %}
+          <div class="form-actions">
+            <button type="button" id="delete-cancel" class="btn-secondary">← Cancelar</button>
+            <button type="submit" class="btn-danger">🗑️ Sí, eliminar</button>
+          </div>
+        </form>
+      </div>
     </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const notebook = document.getElementById('content-notebook')
+        if (!notebook) return
+        const activeBlock = notebook.querySelector('.content-block.is-active')
+        if (activeBlock) {
+          activeBlock.scrollIntoView({ block: 'start', behavior: 'smooth' })
+        }
+        const buttons = document.querySelectorAll('[data-carousel-btn]')
+        const step = () => {
+          const block = notebook.querySelector('.content-block')
+          if (!block) {
+            return 200
+          }
+          const styles = window.getComputedStyle(block)
+          const margin = parseInt(styles.marginBottom || 0, 10)
+          return block.offsetHeight + margin
+        }
+        buttons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const direction = btn.dataset.carouselBtn === 'next' ? 1 : -1
+            notebook.scrollBy({ top: direction * step(), behavior: 'smooth' })
+          })
+        })
+      
+        const createToggle = document.querySelector('[data-create-toggle]')
+        const createPanel = document.querySelector('[data-create-panel]')
+        const createForm = document.querySelector('[data-create-form]')
+        if (createToggle && createPanel && createForm) {
+          const updateStateText = () => {
+            const expanded = !createPanel.classList.contains('is-collapsed')
+            createToggle.textContent = expanded ? 'Cerrar formulario' : '+ Agregar contenido'
+          }
+          createToggle.addEventListener('click', () => {
+            createPanel.classList.toggle('is-collapsed')
+            const expanded = !createPanel.classList.contains('is-collapsed')
+            updateStateText()
+            if (expanded) {
+              createPanel.scrollIntoView({ block: 'start', behavior: 'smooth' })
+            }
+          })
+          updateStateText()
+        }
+      })
+    </script>
   </div>
 {% endblock %}
