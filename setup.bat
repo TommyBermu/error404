@@ -37,18 +37,11 @@ echo ==========================================
 echo Esperando a que las migraciones terminen...
 echo ==========================================
 
-set MAX_ATTEMPTS=20
-set ATTEMPT=0
-
-:wait_django
-set /a ATTEMPT+=1
-
-REM Verificar si Django está corriendo
-docker compose logs web 2>NUL | findstr /C:"Starting development server" >NUL 2>&1
-IF %ERRORLEVEL% EQU 0 (
-  echo Django esta listo
-  goto django_ready
+set APPS=accounts teams courses learning_paths enrollments notifications
+for %%A in (%APPS%) do (
+  docker compose exec -T web python manage.py makemigrations %%A
 )
+docker compose exec -T web python manage.py migrate --noinput
 
 REM Verificar si hay errores
 docker compose logs web 2>NUL | findstr /C:"Error" >NUL 2>&1

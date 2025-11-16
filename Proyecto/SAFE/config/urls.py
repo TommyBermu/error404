@@ -19,9 +19,10 @@ from django.urls import path, include
 from .health import db_health
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    #path("admin/", admin.site.urls),
     path("health/", db_health, name="health_db"),
     path("", include('accounts.urls')),
+    path("", include('administration.urls')),
     path("", include('courses.urls')),
     path("", include('enrollments.urls')),
     path("", include('learning_paths.urls')),

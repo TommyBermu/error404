@@ -1,15 +1,7 @@
-from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
-from . import models
-
-from shared.db import Database
-
-db = Database()
-
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from .models import Course, Module, Content
 def catalog(request):
-    usuarios = (
-        db.manager(models.Course)
-        .order_by("id")
-        .values("id", "name", "description")
-    )
-    return render(request, "courses/catalog.html", {"usuarios": list(usuarios)})
+    return render(request, "courses/catalog.html")
