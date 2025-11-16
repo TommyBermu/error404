@@ -4,7 +4,7 @@ from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from django.urls import reverse
 from django.db import transaction
-from courses.models import Course, Module, Content, Exam, Assignment, Material
+from courses.models import Course, Module, Content, Exam
 from accounts.models import AppUser
 from django.contrib import messages
 from .forms import CourseForm, ModuleForm, ContentForm, MaterialForm
@@ -72,12 +72,32 @@ def course_detail(request, pk):
     modules = course.modules.all().order_by("id")  # pyright: ignore[reportAttributeAccessIssue]
 
     selected_module = None
+    module_contents = None
+    selected_content = None
+    content_edit_form = None
+    material_edit_form = None
     module_id = request.GET.get("module")
     if module_id:
         try:
             selected_module = modules.get(pk=module_id)
         except Module.DoesNotExist:
             selected_module = None
+        else:
+            module_contents = selected_module.contents.select_related(
+                "material", "exam"
+            ).order_by("order", "created_at")
+            content_id = request.GET.get("content")
+            if module_contents.exists() and content_id:
+                selected_content = module_contents.filter(pk=content_id).first()
+
+            if selected_content:
+                content_edit_form = ContentForm(instance=selected_content)
+                if selected_content.material:
+                    material_edit_form = MaterialForm(
+                        instance=selected_content.material
+                    )
+                else:
+                    material_edit_form = MaterialForm()
 
     # forms for inline use
     module_form = ModuleForm()
@@ -88,9 +108,13 @@ def course_detail(request, pk):
         "course": course,
         "modules": modules,
         "selected_module": selected_module,
+        "module_contents": module_contents,
+        "selected_content": selected_content,
         "module_form": module_form,
         "content_form": content_form,
         "material_form": material_form,
+        "content_edit_form": content_edit_form,
+        "material_edit_form": material_edit_form,
     }
     return render(request, "administration/course_detail.html", context)
 
@@ -177,28 +201,42 @@ def content_create(request, module_pk):
 
     if request.method == "POST":
         content_form = ContentForm(request.POST)
-        content_type = request.POST.get("content_type")
+        material_form = MaterialForm(request.POST, request.FILES)
 
         if content_form.is_valid():
             content = content_form.save(commit=False)
             content.module = module
 
-            # Crear el objeto polimórfico según el tipo
-            if content_type == "material":
-                material_form = MaterialForm(request.POST, request.FILES)
-                if material_form.is_valid():
-                    material = material_form.save()
-                    content.material = material
+            block_type = content.block_type
+            content.content_type = Content.ContentType.MATERIAL
 
-            elif content_type == "exam":
-                # Aquí puedes agregar lógica para exámenes
+            if block_type == Content.BlockType.QUIZ:
                 exam = Exam.objects.create()
                 content.exam = exam
-
-            elif content_type == "assignment":
-                # Lógica para tareas
-                assignment = Assignment.objects.create()
-                content.assignment = assignment
+                content.content_type = Content.ContentType.EXAM
+            elif block_type in (
+                Content.BlockType.IMAGE,
+                Content.BlockType.VIDEO,
+                Content.BlockType.PDF,
+            ):
+                if material_form.is_valid() and material_form.cleaned_data.get("file"):
+                    material = material_form.save()
+                    content.material = material
+                else:
+                    material_form.add_error(
+                        "file",
+                        "Adjunta un archivo para imágenes, videos o PDFs.",
+                    )
+                    return render(
+                        request,
+                        "administration/content_form.html",
+                        {
+                            "content_form": content_form,
+                            "material_form": material_form,
+                            "module": module,
+                            "course": module.course,
+                        },
+                    )
 
             content.save()
             messages.success(request, "Contenido agregado al módulo.")
@@ -219,4 +257,78 @@ def content_create(request, module_pk):
             "module": module,
             "course": module.course,
         },
+    )
+
+
+@login_required
+def content_update(request, content_pk):
+    content = get_object_or_404(Content, pk=content_pk)
+    module = content.module
+
+    if request.method != "POST":
+        return redirect(
+            reverse("course_detail", kwargs={"pk": module.course.pk})
+            + f"?module={module.pk}&content={content.pk}#content-inspector"
+        )
+
+    content_form = ContentForm(request.POST, instance=content)
+    material_instance = content.material if content.material else None
+    material_form = MaterialForm(
+        request.POST, request.FILES, instance=material_instance
+    )
+
+    material_checked = False
+
+    if content_form.is_valid():
+        updated_content = content_form.save(commit=False)
+        block_type = updated_content.block_type
+        updated_content.content_type = Content.ContentType.MATERIAL
+
+        if block_type == Content.BlockType.QUIZ:
+            if not content.exam:
+                content.exam = Exam.objects.create()
+            updated_content.exam = content.exam
+            updated_content.material = None
+            updated_content.content_type = Content.ContentType.EXAM
+        elif block_type in (
+            Content.BlockType.IMAGE,
+            Content.BlockType.VIDEO,
+            Content.BlockType.PDF,
+        ):
+            material_checked = True
+            if material_form.is_valid():
+                existing_file = material_form.cleaned_data.get("file") or (
+                    material_form.instance and material_form.instance.file
+                )
+                if not existing_file:
+                    material_form.add_error(
+                        "file",
+                        "Adjunta un archivo para imágenes, videos o PDFs.",
+                    )
+                else:
+                    material = material_form.save()
+                    updated_content.material = material
+                    updated_content.exam = None
+            else:
+                messages.error(request, "Revisa los datos del archivo adjunto.")
+        else:
+            updated_content.material = None
+            updated_content.exam = None
+
+        if not material_form.errors:
+            updated_content.save()
+            messages.success(request, "Contenido actualizado.")
+    else:
+        for field, field_errors in content_form.errors.items():
+            for error in field_errors:
+                messages.error(request, f"{field}: {error}")
+
+    if material_checked and material_form.errors:
+        for field, field_errors in material_form.errors.items():
+            for error in field_errors:
+                messages.error(request, f"Archivo: {error}")
+
+    return redirect(
+        reverse("course_detail", kwargs={"pk": module.course.pk})
+        + f"?module={module.pk}&content={content.pk}#content-inspector"
     )
