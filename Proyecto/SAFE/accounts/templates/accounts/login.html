@@ -26,11 +26,20 @@
           <form method="post" action="{% url 'user_add' %}">
             {% csrf_token %}
             <label for="username" class="label">Nombre</label>
-            <input id="username" name="username" placeholder="Nombre" required type="text" class="input" />
+            <input id="username" name="username" placeholder="Nombre" required type="text" class="input" value="{{ username|default:'' }}" />
 
             <label for="email" class="label mt">Email</label>
-            <input id="email" name="email" placeholder="Email" required type="email" class="input" />
+            <input id="email" name="email" placeholder="Email" required type="email" class="input" value="{{ email|default:'' }}" />
 
+            <label for="password" class="label mt">Contraseña</label>
+            <input id="password" name="password" placeholder="Contraseña" required type="password" class="input" />
+            
+            {% if error_msg %}
+              <div class="alert alert-warning" style="margin:10px 0; color:#b45309; background:#fff8e1; border:1px solid #ffe58f; padding:10px; border-radius:4px;">
+                <strong>¡Atención!</strong><br>
+                {{ error_msg|linebreaksbr }}
+              </div>
+            {% endif %}
             <div class="actions">
               <button class="btn btn-gold">Agregar</button>
               <span class="muted">Se creará con los valores ingresados.</span>
@@ -47,6 +56,7 @@
                   <th style="width:80px">ID</th>
                   <th>Nombre</th>
                   <th>Email</th>
+                  <th>Status</th>
                   <th style="width:140px"></th>
                 </tr>
               </thead>
@@ -55,6 +65,7 @@
                   <tr>
                     <td>{{ u.id }}</td>
                     <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
                     <td>{{ u.email }}</td>
                     <td>
                       <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
