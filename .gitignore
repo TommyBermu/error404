@@ -16,3 +16,4 @@ __pycache__/
 migrations/
 temp/
 media/
+.ruff_cache/

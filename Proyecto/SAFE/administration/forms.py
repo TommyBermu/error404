@@ -36,6 +36,13 @@ class CourseForm(forms.ModelForm):
             "header_img": "Imagen de portada",
         }
 
+    def clean_duration_hours(self):
+        """Valida que la duración no sea negativa."""
+        duration = self.cleaned_data.get("duration_hours")
+        if duration is not None and duration < 0:
+            raise forms.ValidationError("La duración no puede ser negativa.")
+        return duration
+
 
 class ModuleForm(forms.ModelForm):
     class Meta:

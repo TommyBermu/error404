@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 class Course(models.Model):
@@ -30,6 +31,13 @@ class Course(models.Model):
         db_table = "course"
         verbose_name = "Curso"
         verbose_name_plural = "Cursos"
+
+    def clean(self):
+        """Validación personalizada del modelo."""
+        if self.duration_hours is not None and self.duration_hours < 0:
+            raise ValidationError(
+                {"duration_hours": "La duración no puede ser negativa."}
+            )
 
     def __str__(self):
         return self.name
@@ -125,11 +133,23 @@ class Material(models.Model):
         verbose_name = "Material"
         verbose_name_plural = "Materiales"
 
+    def infer_type_from_file(self):
+        """
+        Ajusta self.type según la extensión del archivo si:
+        - hay archivo, y
+        - type aún no está definido, y
+        - la extensión está soportada.
+        """
+        if not self.file or self.type:
+            return
+
+        ext = self.file.name.split(".")[-1].lower()
+        if ext in [choice.value for choice in Material.MaterialType]:
+            self.type = ext
+
     def save(self, *args, **kwargs):
-        if self.file and not self.type:
-            ext = self.file.name.split(".")[-1].lower()
-            if ext in [c.value for c in self.MaterialType]:
-                self.type = ext
+        # usa la lógica pura antes de guardar
+        self.infer_type_from_file()
         super().save(*args, **kwargs)
 
 
