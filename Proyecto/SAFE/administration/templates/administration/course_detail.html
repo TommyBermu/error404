@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static admin_extras %}
 
 {% block title %}
   {{ course.name }} - SAFE Academy
@@ -159,8 +159,10 @@
                             {% endif %}
                           {% elif content.block_type == 'pdf' %}
                             {% if content.material and content.material.file %}
-                              <iframe src="{{ content.material.file.url }}#view=FitH" class="content-pdf" title="{{ content.title }}"></iframe>
-                              <a href="{{ content.material.file.url }}" target="_blank" rel="noopener" class="link-small">Abrir PDF en nueva pestaña</a>
+                              <a href="{{ content.material.file.url }}" target="_blank" rel="noopener" download class="download-button">
+                                <span class="download-icon">📄</span>
+                                <span>{{ content.material.file.name|filename }}</span>
+                              </a>
                             {% else %}
                               <p class="content-empty">Archivo PDF no disponible.</p>
                             {% endif %}
@@ -196,33 +198,42 @@
                           <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor">
                             {% csrf_token %}
                             <div class="form-grid">
-                              <div class="form-field">
+                              <div class="form-field form-field-title">
+                                <label>Título</label>
+                                {{ content_edit_form.title }}
+                              </div>
+                              <div class="form-field form-field-type">
                                 <label>Tipo de bloque</label>
                                 {{ content_edit_form.block_type }}
                               </div>
-                              <div class="form-field">
-                                <label>Título</label>
-                                {{ content_edit_form.title }}
+                              <div class="form-field checkbox-field form-field-inline">
+                                <label class="checkbox-label">
+                                  {{ content_edit_form.is_mandatory }}
+                                  <span>Obligatorio</span>
+                                </label>
                               </div>
                               <div class="form-field form-field-full">
                                 <label>Texto</label>
                                 {{ content_edit_form.description }}
                               </div>
-                              <div class="form-field">
+                              <div class="form-field form-field-full file-field">
                                 <label>Archivo (imagen/video/pdf)</label>
-                                {{ material_edit_form.file }}
-                                <small class="field-hint">Solo para bloques multimedia.</small>
-                              </div>
-                              <div class="form-field checkbox-field">
-                                <label class="checkbox-label">
-                                  {{ content_edit_form.is_mandatory }}
-                                  <span>Marcar como obligatorio</span>
-                                </label>
+                                <div class="file-input-wrapper">{{ material_edit_form.file }}</div>
+                                <div class="file-hint-row">
+                                  <small class="field-hint">Solo para bloques multimedia.</small>
+                                  {% if selected_content.material and selected_content.material.file %}
+                                    <a href="{{ selected_content.material.file.url }}" target="_blank" rel="noopener" class="link-small">Ver archivo actual</a>
+                                  {% endif %}
+                                </div>
                               </div>
                             </div>
                             <div class="content-form__actions">
                               <button type="submit" class="btn-primary">Actualizar bloque</button>
                             </div>
+                          </form>
+                          <form method="post" action="{% url 'content_delete' selected_content.pk %}" class="content-delete-form" onsubmit="return confirm('¿Eliminar {{ selected_content.title }}?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-danger btn-small">Eliminar contenido</button>
                           </form>
                         {% endif %}
                       </article>
@@ -241,28 +252,28 @@
                           <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form inline-editor" data-create-form>
                             {% csrf_token %}
                             <div class="form-grid">
-                              <div class="form-field">
+                              <div class="form-field form-field-title">
+                                <label>Título</label>
+                                {{ content_form.title }}
+                              </div>
+                              <div class="form-field form-field-type">
                                 <label>Tipo de bloque</label>
                                 {{ content_form.block_type }}
                               </div>
-                              <div class="form-field">
-                                <label>Título</label>
-                                {{ content_form.title }}
+                              <div class="form-field checkbox-field form-field-inline">
+                                <label class="checkbox-label">
+                                  {{ content_form.is_mandatory }}
+                                  <span>Obligatorio</span>
+                                </label>
                               </div>
                               <div class="form-field form-field-full">
                                 <label>Texto</label>
                                 {{ content_form.description }}
                               </div>
-                              <div class="form-field">
+                              <div class="form-field form-field-full file-field">
                                 <label>Archivo (imagen/video/pdf)</label>
-                                {{ material_form.file }}
+                                <div class="file-input-wrapper">{{ material_form.file }}</div>
                                 <small class="field-hint">Solo necesario para bloques multimedia.</small>
-                              </div>
-                              <div class="form-field checkbox-field">
-                                <label class="checkbox-label">
-                                  {{ content_form.is_mandatory }}
-                                  <span>Marcar como obligatorio</span>
-                                </label>
                               </div>
                             </div>
                             <div class="content-form__actions">
@@ -282,28 +293,28 @@
                 <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form">
                   {% csrf_token %}
                   <div class="form-grid">
-                    <div class="form-field">
+                    <div class="form-field form-field-title">
+                      <label>Título</label>
+                      {{ content_form.title }}
+                    </div>
+                    <div class="form-field form-field-type">
                       <label>Tipo de bloque</label>
                       {{ content_form.block_type }}
                     </div>
-                    <div class="form-field">
-                      <label>Título</label>
-                      {{ content_form.title }}
+                    <div class="form-field checkbox-field form-field-inline">
+                      <label class="checkbox-label">
+                        {{ content_form.is_mandatory }}
+                        <span>Obligatorio</span>
+                      </label>
                     </div>
                     <div class="form-field form-field-full">
                       <label>Texto</label>
                       {{ content_form.description }}
                     </div>
-                    <div class="form-field">
+                    <div class="form-field form-field-full file-field">
                       <label>Archivo (imagen/video/pdf)</label>
-                      {{ material_form.file }}
+                      <div class="file-input-wrapper">{{ material_form.file }}</div>
                       <small class="field-hint">Solo necesario para bloques multimedia.</small>
-                    </div>
-                    <div class="form-field checkbox-field">
-                      <label class="checkbox-label">
-                        {{ content_form.is_mandatory }}
-                        <span>Marcar como obligatorio</span>
-                      </label>
                     </div>
                   </div>
                   <div class="content-form__actions">

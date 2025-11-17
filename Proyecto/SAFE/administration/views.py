@@ -196,68 +196,52 @@ def module_delete(request, pk):
 
 
 @login_required
+@require_POST
 def content_create(request, module_pk):
     module = get_object_or_404(Module, pk=module_pk)
-
-    if request.method == "POST":
-        content_form = ContentForm(request.POST)
-        material_form = MaterialForm(request.POST, request.FILES)
-
-        if content_form.is_valid():
-            content = content_form.save(commit=False)
-            content.module = module
-
-            block_type = content.block_type
-            content.content_type = Content.ContentType.MATERIAL
-
-            if block_type == Content.BlockType.QUIZ:
-                exam = Exam.objects.create()
-                content.exam = exam
-                content.content_type = Content.ContentType.EXAM
-            elif block_type in (
-                Content.BlockType.IMAGE,
-                Content.BlockType.VIDEO,
-                Content.BlockType.PDF,
-            ):
-                if material_form.is_valid() and material_form.cleaned_data.get("file"):
-                    material = material_form.save()
-                    content.material = material
-                else:
-                    material_form.add_error(
-                        "file",
-                        "Adjunta un archivo para imágenes, videos o PDFs.",
-                    )
-                    return render(
-                        request,
-                        "administration/content_form.html",
-                        {
-                            "content_form": content_form,
-                            "material_form": material_form,
-                            "module": module,
-                            "course": module.course,
-                        },
-                    )
-
-            content.save()
-            messages.success(request, "Contenido agregado al módulo.")
-            return redirect(
-                reverse("course_detail", kwargs={"pk": module.course.pk})
-                + f"?module={module.pk}"
-            )
-    else:
-        content_form = ContentForm()
-        material_form = MaterialForm()
-
-    return render(
-        request,
-        "administration/content_form.html",
-        {
-            "content_form": content_form,
-            "material_form": material_form,
-            "module": module,
-            "course": module.course,
-        },
+    redirect_url = (
+        reverse("course_detail", kwargs={"pk": module.course.pk})
+        + f"?module={module.pk}#content-block-new"
     )
+
+    content_form = ContentForm(request.POST)
+    material_form = MaterialForm(request.POST, request.FILES)
+
+    if content_form.is_valid():
+        content = content_form.save(commit=False)
+        content.module = module
+
+        block_type = content.block_type
+        content.content_type = Content.ContentType.MATERIAL
+
+        if block_type == Content.BlockType.QUIZ:
+            exam = Exam.objects.create()
+            content.exam = exam
+            content.content_type = Content.ContentType.EXAM
+        elif block_type in (
+            Content.BlockType.IMAGE,
+            Content.BlockType.VIDEO,
+            Content.BlockType.PDF,
+        ):
+            if material_form.is_valid() and material_form.cleaned_data.get("file"):
+                material = material_form.save()
+                content.material = material
+            else:
+                messages.error(
+                    request,
+                    "Adjunta un archivo para imágenes, videos o PDFs.",
+                )
+                return redirect(redirect_url)
+
+        content.save()
+        messages.success(request, "Contenido agregado al módulo.")
+        return redirect(redirect_url)
+
+    for field, field_errors in content_form.errors.items():
+        for error in field_errors:
+            messages.error(request, f"{field}: {error}")
+
+    return redirect(redirect_url)
 
 
 @login_required
@@ -331,4 +315,20 @@ def content_update(request, content_pk):
     return redirect(
         reverse("course_detail", kwargs={"pk": module.course.pk})
         + f"?module={module.pk}&content={content.pk}#content-inspector"
+    )
+
+
+@login_required
+@require_POST
+def content_delete(request, content_pk):
+    content = get_object_or_404(Content, pk=content_pk)
+    module = content.module
+    course_pk = module.course.pk
+
+    with transaction.atomic():
+        content.delete()
+
+    messages.success(request, "Contenido eliminado.")
+    return redirect(
+        reverse("course_detail", kwargs={"pk": course_pk}) + f"?module={module.pk}"
     )

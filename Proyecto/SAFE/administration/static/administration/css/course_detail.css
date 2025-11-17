@@ -424,6 +424,28 @@ body {
     min-height: 320px;
 }
 
+.download-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border: 1px solid var(--safe-border);
+    border-radius: 16px;
+    background: var(--safe-card);
+    font-weight: 600;
+    color: var(--safe-dark);
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(15, 20, 40, 0.05);
+}
+
+.download-button:hover {
+    background: var(--safe-card-alt);
+}
+
+.download-icon {
+    font-size: 18px;
+}
+
 .content-block__actions {
     display: flex;
     justify-content: flex-end;
@@ -515,6 +537,7 @@ body {
     border: 1px solid var(--safe-border);
     padding: 10px 12px;
     font-size: 14px;
+    box-sizing: border-box;
 }
 
 .content-form textarea {
@@ -531,9 +554,40 @@ body {
     grid-column: 1 / -1;
 }
 
+.form-field-title {
+    grid-column: span 2;
+}
+
+.form-field-type {
+    min-width: 160px;
+}
+
+.form-field-inline {
+    align-self: end;
+}
+
+.file-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.file-input-wrapper input[type="file"] {
+    padding: 6px;
+}
+
+.file-hint-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
 .checkbox-field {
     display: flex;
     align-items: center;
+    gap: 8px;
+    padding-top: 4px;
 }
 
 .checkbox-label {
@@ -608,6 +662,12 @@ body {
 .btn-small {
     padding: 6px 12px;
     font-size: 13px;
+}
+
+.content-delete-form {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
 }
 
 @media (max-width: 900px) {
