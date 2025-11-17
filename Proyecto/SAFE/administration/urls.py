@@ -23,6 +23,11 @@ urlpatterns = [
         views.content_update,
         name="content_update",
     ),
+    path(
+        "modules/content/<int:content_pk>/delete/",
+        views.content_delete,
+        name="content_delete",
+    ),
     path("modules/<int:pk>/delete/", views.module_delete, name="module_delete"),
     path("users/<int:pk>/del/", av.user_del, name="user_del"),
 ]

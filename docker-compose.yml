@@ -8,6 +8,7 @@ services:
       - "8000:8000"
     volumes:
       - ./Proyecto/SAFE:/app
+      - media_data:/app/media
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:
@@ -38,3 +39,4 @@ services:
 
 volumes:
   pg_data:
+  media_data:

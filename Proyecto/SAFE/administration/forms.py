@@ -113,7 +113,7 @@ class MaterialForm(forms.ModelForm):
         fields = ["type", "file"]
         widgets = {
             "type": forms.Select(attrs={"class": ""}),
-            "file": forms.ClearableFileInput(attrs={"class": ""}),
+            "file": forms.FileInput(attrs={"class": ""}),
         }
         labels = {
             "type": "Tipo de archivo",
