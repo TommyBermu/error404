@@ -32,16 +32,30 @@ def log(request):
     #     with transaction.atomic():
     #         AppUser.objects.create(username=username, email=email)
     # return redirect("login")
+   
+   #crear usuario de prueba
+   
+    AppUser.objects.create(username="testuser",email="testuser@example.com",password="testpassword",first_name="Test",last_name="User")   
+
     email = request.POST.get("email", "").strip()
-    if unique_email(email):
-        messages.success(request, f"Email encontrado: {email}")
-    else:
-        messages.error(request, f"Email no encontrado: {email}")
+    password = request.POST.get("password", "").strip()
+    if not unique_email(email):
+        #messages.error(request, f"Email no encontrado: {email}")
+        AppUser.objects.filter(email="testuser@example.com").delete()  # Eliminar usuario de prueba
+        return render(request, 'accounts/login.html', {'error_login': 'Email no existente'})
+
+    user = AppUser.objects.get(email=email)
+    if user.password != password:
+        #messages.error(request, "Contraseña incorrecta")
+        AppUser.objects.filter(email="testuser@example.com").delete()  # Eliminar usuario de prueba
+        return render(request, 'accounts/login.html', {'error_login': 'Contraseña incorrecta'})
     
-    return redirect("login")
+    AppUser.objects.filter(email="testuser@example.com").delete()  # Eliminar usuario de prueba
+    return redirect("catalog")
 
 
-def unique_email( email):
+
+def unique_email(email):
     #codigo
     try:
         AppUser.objects.get(email = email)
@@ -49,8 +63,3 @@ def unique_email( email):
     except AppUser.DoesNotExist:
         return False
 
-
-def user_del(request, pk):
-    with transaction.atomic():
-        AppUser.objects.filter(pk=pk).delete()
-    return redirect("login")
