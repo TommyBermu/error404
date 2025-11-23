@@ -7,12 +7,8 @@ from .models import AppUser
 from .password_validator import is_valid_password
 
 def login(request):
-    usuarios = (
-        AppUser.objects
-        .order_by("id")
-        .values("id", "username", "email", "password")
-    )
-    return render(request, "accounts/login.html", {"usuarios": list(usuarios)})
+    
+    return render(request, "accounts/login.html")
     # try:
     #     AppUser.objects.get(email = request.POST.get("email"))
     # except AppUser.DoesNotExist:
@@ -64,9 +60,15 @@ def unique_email(email):
     except AppUser.DoesNotExist:
         return False
 
+
+def to_signup(request):
+    return render(request, "accounts/sign_up.html")
+
+def to_login(request):
+    return render(request, "accounts/login.html")
       
       
- @require_POST
+@require_POST
 def user_add(request):
     username = request.POST.get("username", "").strip()
     email = request.POST.get("email", "").strip()
@@ -102,9 +104,4 @@ def user_add(request):
         user = AppUser(username=username, email=email)
         user.set_password(password)
         user.save()
-    return redirect("login")
-
-def user_del(request, pk):
-    with transaction.atomic():
-        AppUser.objects.filter(pk=pk).delete()
     return redirect("login")
