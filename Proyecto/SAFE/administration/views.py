@@ -231,9 +231,22 @@ def content_create(request, module_pk):
         content.content_type = Content.ContentType.MATERIAL
 
         if block_type == Content.BlockType.QUIZ:
-            exam = Exam.objects.create()
-            content.exam = exam
-            content.content_type = Content.ContentType.EXAM
+            # Obtener las preguntas del formulario
+            import json
+
+            quiz_questions = request.POST.get("quiz_questions", "[]")
+            try:
+                questions = json.loads(quiz_questions)
+                exam = Exam.objects.create(
+                    questions=questions, total_questions=len(questions)
+                )
+                content.exam = exam
+                content.content_type = Content.ContentType.EXAM
+            except json.JSONDecodeError:
+                messages.error(
+                    request, "Error al procesar las preguntas del cuestionario."
+                )
+                return redirect(redirect_url)
         elif block_type in (
             Content.BlockType.IMAGE,
             Content.BlockType.VIDEO,
@@ -315,8 +328,26 @@ def content_update(request, content_pk):
         updated_content.content_type = Content.ContentType.MATERIAL
 
         if block_type == Content.BlockType.QUIZ:
+            import json
+
+            quiz_questions = request.POST.get("quiz_questions", "[]")
+
             if not content.exam:
-                content.exam = Exam.objects.create()
+                content.exam = Exam.objects.create(questions=[], total_questions=0)
+
+            try:
+                questions = json.loads(quiz_questions)
+                # solo actualizar si recibimos preguntas (para evitar borrar si el campo viene vacío por error)
+                # a si es una lista vacía intencional
+                # asumimos que el frontend siempre envía el estado actual xd
+                content.exam.questions = questions
+                content.exam.total_questions = len(questions)
+                content.exam.save()
+            except json.JSONDecodeError:
+                messages.error(
+                    request, "Error al procesar las preguntas del cuestionario."
+                )
+
             updated_content.exam = content.exam
             updated_content.material = None
             updated_content.content_type = Content.ContentType.EXAM
@@ -365,6 +396,10 @@ def content_update(request, content_pk):
         for field, field_errors in material_form.errors.items():
             for error in field_errors:
                 messages.error(request, f"Archivo: {error}")
+
+    next_url = request.POST.get("next")
+    if next_url:
+        return redirect(next_url)
 
     return redirect(
         reverse("course_detail", kwargs={"pk": module.course.pk})

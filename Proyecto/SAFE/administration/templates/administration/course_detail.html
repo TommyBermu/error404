@@ -60,7 +60,6 @@
   </div>
 
   <div class="container course-body">
-    <div class="container">
       <div class="course-layout">
         <section class="modules-panel">
           <div class="section-header">
@@ -101,7 +100,6 @@
           </div>
 
           {% if selected_module %}
-            {% if module_contents %}
               <div class="content-columns">
                 <div class="content-carousel inline-editing">
                   <div class="carousel-header">
@@ -168,15 +166,32 @@
                               <p class="content-empty">Archivo PDF no disponible.</p>
                             {% endif %}
                           {% elif content.block_type == 'quiz' %}
-                            {% if content.exam and content.exam.questions %}
-                              <div class="quiz-block">
+                            {% if selected_content and selected_content.pk == content.pk %}
+                              <!-- Modo edición inline -->
+                              <div class="quiz-edit-inline" id="quiz-editor-{{ content.pk }}">
+                                <div id="questions-container-inline"></div>
+                                <button type="button" class="btn-secondary-small" onclick="addQuestionInline()" style="margin-top: 16px;">+ Agregar pregunta</button>
+                              </div>
+                            {% elif content.exam and content.exam.questions %}
+
                                 {% for question in content.exam.questions %}
-                                  <div class="quiz-question">
-                                    <strong>Pregunta {{ forloop.counter }}</strong>
-                                    <p>{{ question.question|default:question }}</p>
+                                  <div class="quiz-question-preview">
+                                    <div class="question-preview-header">
+                                      <h5>Pregunta {{ forloop.counter }}</h5>
+                                      <small class="question-type-label">{% if question.type == 'single' %}Selección única{% else %}Selección múltiple{% endif %}</small>
+                                    </div>
+                                    <p class="question-text">{{ question.text }}</p>
+                                    <div class="answers-preview">
+                                      {% for answer in question.answers %}
+                                        <div class="answer-preview {% if answer.is_correct %}correct-answer{% endif %}">
+                                          <span class="answer-marker">{% if answer.is_correct %}✓{% else %}○{% endif %}</span>
+                                          <span>{{ answer.text }}</span>
+                                        </div>
+                                      {% endfor %}
+                                    </div>
                                   </div>
                                 {% endfor %}
-                              </div>
+
                             {% elif content.exam %}
                               <p class="content-empty">Aún no hay preguntas para este cuestionario.</p>
                             {% else %}
@@ -196,57 +211,91 @@
                         </div>
 
                         {% if selected_content and selected_content.pk == content.pk and content_edit_form %}
-                          <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor" data-content-form>
-                            {% csrf_token %}
-                            <div class="form-grid">
-                              <div class="form-field form-field-title">
-                                <label>Título</label>
+                          {% if selected_content.block_type == 'quiz' %}
+                            <!-- Formulario simplificado para cuestionarios -->
+                            <form method="post" action="{% url 'content_update' selected_content.pk %}" class="quiz-inline-form" data-content-form>
+                              {% csrf_token %}
+                              <input type="hidden" name="next" value="{% url 'course_detail' course.pk %}?module={{ selected_module.pk }}#content-block-{{ content.pk }}">
+                              <div class="form-field">
+                                <label>Título del cuestionario</label>
                                 {{ content_edit_form.title }}
                               </div>
-                              <div class="form-field form-field-type">
-                                <label>Tipo de bloque</label>
-                                {{ content_edit_form.block_type }}
+                              <input type="hidden" name="quiz_questions" id="quiz_questions_inline" value="[]">
+                              {% if selected_content.exam and selected_content.exam.questions %}
+                                {{ selected_content.exam.questions|json_script:"existing-questions-data" }}
+                              {% endif %}
+                              <input type="hidden" name="block_type" value="quiz">
+                              <input type="hidden" name="is_mandatory" value="{{ selected_content.is_mandatory|yesno:'true,false' }}">
+                              <div class="content-form__actions">
+                                <button type="submit" class="btn-primary">Actualizar bloque</button>
+                                <button type="button" class="btn-danger" onclick="if(confirm('¿Eliminar {{ selected_content.title }}?')) { document.getElementById('delete-form-{{ selected_content.pk }}').submit(); }">Eliminar contenido</button>
                               </div>
-                              <div class="form-field checkbox-field form-field-inline">
-                                <label class="checkbox-label">
-                                  {{ content_edit_form.is_mandatory }}
-                                  <span>Obligatorio</span>
-                                </label>
-                              </div>
-                              <div class="form-field form-field-full">
-                                <label>Texto</label>
-                                {{ content_edit_form.description }}
-                              </div>
-                              <div class="form-field form-field-full file-field">
-                                <label>Archivo (imagen/video/pdf)</label>
-                                <div class="file-input-wrapper">{{ material_edit_form.file }}</div>
-                                <div class="file-hint-row">
-                                  <small class="field-hint">Solo para bloques multimedia.</small>
-                                  {% if selected_content.material and selected_content.material.file %}
-                                    <a href="{{ selected_content.material.file.url }}" target="_blank" rel="noopener" class="link-small">Ver archivo actual</a>
-                                  {% endif %}
+                            </form>
+                            <form id="delete-form-{{ selected_content.pk }}" method="post" action="{% url 'content_delete' selected_content.pk %}" style="display: none;">
+                              {% csrf_token %}
+                            </form>
+                          {% else %}
+                            <!-- Formulario normal para otros tipos -->
+                            <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor" data-content-form>
+                              {% csrf_token %}
+                              <input type="hidden" name="next" value="{% url 'course_detail' course.pk %}?module={{ selected_module.pk }}#content-block-{{ content.pk }}">
+                              <div class="form-grid">
+                                <div class="form-field form-field-title">
+                                  <label>Título</label>
+                                  {{ content_edit_form.title }}
+                                </div>
+                                <div class="form-field form-field-type">
+                                  <label>Tipo de bloque</label>
+                                  {{ content_edit_form.block_type }}
+                                </div>
+                                <div class="form-field checkbox-field form-field-inline">
+                                  <label class="checkbox-label">
+                                    {{ content_edit_form.is_mandatory }}
+                                    <span>Obligatorio</span>
+                                  </label>
+                                </div>
+                                <div class="form-field form-field-full">
+                                  <label>Texto</label>
+                                  {{ content_edit_form.description }}
+                                </div>
+                                <div class="form-field form-field-full file-field" data-file-field>
+                                  <label>Archivo (imagen/video/pdf)</label>
+                                  <div class="file-input-wrapper">{{ material_edit_form.file }}</div>
+                                  <div class="file-hint-row">
+                                    <small class="field-hint">Solo para bloques multimedia.</small>
+                                    {% if selected_content.material and selected_content.material.file %}
+                                      <a href="{{ selected_content.material.file.url }}" target="_blank" rel="noopener" class="link-small">Ver archivo actual</a>
+                                    {% endif %}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div class="content-form__actions">
-                              <button type="submit" class="btn-primary">Actualizar bloque</button>
-                            </div>
-                          </form>
-                          <form method="post" action="{% url 'content_delete' selected_content.pk %}" class="content-delete-form" onsubmit="return confirm('¿Eliminar {{ selected_content.title }}?');">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-danger btn-small">Eliminar contenido</button>
-                          </form>
+                              <div class="content-form__actions">
+                                <button type="submit" class="btn-primary">Actualizar bloque</button>
+                                <button type="button" class="btn-danger" onclick="if(confirm('¿Eliminar {{ selected_content.title }}?')) { document.getElementById('delete-form-{{ selected_content.pk }}').submit(); }">Eliminar contenido</button>
+                              </div>
+                            </form>
+                            <form id="delete-form-{{ selected_content.pk }}" method="post" action="{% url 'content_delete' selected_content.pk %}" style="display: none;">
+                              {% csrf_token %}
+                            </form>
+                          {% endif %}
                         {% endif %}
                       </article>
+                    {% empty %}
+                      <div class="empty-state-small">No hay contenidos en este módulo.</div>
                     {% endfor %}
 
                     {% if not selected_content %}
                       <div class="add-content-wrapper">
-                        <button type="button" class="btn-primary add-content-toggle" data-create-toggle>+ Agregar contenido</button>
-                        <article class="content-block content-block--new is-collapsed" id="content-block-new" data-create-panel>
+                        {% if module_contents %}
+                          <button type="button" class="btn-primary add-content-toggle" data-create-toggle>+ Agregar contenido</button>
+                          <article class="content-block content-block--new is-collapsed" id="content-block-new" data-create-panel>
+                        {% else %}
+                          <h4 class="inspector-subtitle" style="margin-bottom: 16px;">Agregar el primer bloque</h4>
+                          <article class="content-block content-block--new" id="content-block-new" data-create-panel>
+                        {% endif %}
                           <div class="content-block__header">
                             <div>
-                              <p class="content-block__order">Nuevo bloque</p>
+                              <p class="content-block__order">{% if module_contents %}Nuevo bloque{% else %}Bloque 1{% endif %}</p>
                               <h3 class="content-block__title">Formulario de creación</h3>
                             </div>
                           </div>
@@ -271,15 +320,23 @@
                                 <label>Texto</label>
                                 {{ content_form.description }}
                               </div>
-                              <div class="form-field form-field-full file-field">
+                              <div class="form-field form-field-full file-field" data-file-field>
                                 <label>Archivo (imagen/video/pdf)</label>
                                 {{ material_form.expected_type }}
                                 <div class="file-input-wrapper">{{ material_form.file }}</div>
                                 <small class="field-hint">El tipo se determina automáticamente según el "Tipo de bloque" seleccionado arriba.</small>
                               </div>
+                              
+                              <!-- Editor de preguntas para cuestionarios -->
+                              <div class="form-field form-field-full quiz-editor" data-quiz-editor style="display: none;">
+                                <label>Preguntas del cuestionario</label>
+                                <div id="questions-container"></div>
+                                <button type="button" class="btn-secondary" onclick="addQuestion()">+ Agregar pregunta</button>
+                                <input type="hidden" name="quiz_questions" id="quiz_questions" value="[]">
+                              </div>
                             </div>
                             <div class="content-form__actions">
-                              <button type="submit" class="btn-primary">Crear bloque</button>
+                              <button type="submit" class="btn-primary">{% if module_contents %}Crear bloque{% else %}Agregar contenido{% endif %}</button>
                             </div>
                           </form>
                         </article>
@@ -288,50 +345,12 @@
                   </div>
                 </div>
               </div>
-            {% else %}
-              <div class="empty-state-small">No hay contenidos en este módulo.</div>
-              <div class="inspector-card" style="margin-top:16px;">
-                <h4 class="inspector-subtitle">Agregar el primer bloque</h4>
-                <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form" data-content-form>
-                  {% csrf_token %}
-                  <div class="form-grid">
-                    <div class="form-field form-field-title">
-                      <label>Título</label>
-                      {{ content_form.title }}
-                    </div>
-                    <div class="form-field form-field-type">
-                      <label>Tipo de bloque</label>
-                      {{ content_form.block_type }}
-                    </div>
-                    <div class="form-field checkbox-field form-field-inline">
-                      <label class="checkbox-label">
-                        {{ content_form.is_mandatory }}
-                        <span>Obligatorio</span>
-                      </label>
-                    </div>
-                    <div class="form-field form-field-full">
-                      <label>Texto</label>
-                      {{ content_form.description }}
-                    </div>
-                    <div class="form-field form-field-full file-field">
-                      <label>Archivo (imagen/video/pdf)</label>
-                      {{ material_form.expected_type }}
-                      <div class="file-input-wrapper">{{ material_form.file }}</div>
-                      <small class="field-hint">El tipo se determina automáticamente según el "Tipo de bloque" seleccionado arriba.</small>
-                    </div>
-                  </div>
-                  <div class="content-form__actions">
-                    <button type="submit" class="btn-primary">Agregar contenido</button>
-                  </div>
-                </form>
-              </div>
-            {% endif %}
+
           {% else %}
             <div class="empty-state-small">Selecciona un módulo a la izquierda para ver y agregar contenidos.</div>
           {% endif %}
         </section>
       </div>
-    </div>
 
     <!-- Reuse delete modal (if not already present globally) -->
     <div id="delete-modal" class="confirm-overlay" style="display:none;">
@@ -360,6 +379,42 @@
     </div>
 
     <script>
+      // Validación de cuestionarios
+      function validateQuiz(form) {
+        const blockTypeInput = form.querySelector('[name="block_type"]')
+        if (!blockTypeInput || blockTypeInput.value !== 'quiz') {
+          return true
+        }
+
+        const questionsInput = form.querySelector('input[name="quiz_questions"]')
+        if (!questionsInput || !questionsInput.value) {
+          return true
+        }
+
+        try {
+          const questions = JSON.parse(questionsInput.value)
+          
+          if (questions.length === 0) {
+             alert('El cuestionario debe tener al menos una pregunta.')
+             return false
+          }
+
+          for (let i = 0; i < questions.length; i++) {
+            const q = questions[i]
+            const hasCorrect = q.answers && q.answers.some(a => a.is_correct)
+            
+            if (!hasCorrect) {
+              alert(`La pregunta "${q.text}" no tiene ninguna respuesta correcta marcada.\nPor favor, selecciona al menos una opción correcta.`)
+              return false
+            }
+          }
+        } catch (e) {
+          console.error('Error validando quiz:', e)
+        }
+
+        return true
+      }
+
       // Validación de archivos según tipo de bloque
       function validateFileForBlockType(form) {
         const blockTypeSelect = form.querySelector('[name="block_type"]')
@@ -417,6 +472,10 @@
           form.addEventListener('submit', function (e) {
             if (!validateFileForBlockType(this)) {
               e.preventDefault()
+              return
+            }
+            if (!validateQuiz(this)) {
+              e.preventDefault()
             }
           })
         })
@@ -462,7 +521,478 @@
           })
           updateStateText()
         }
+        
+        // Manejo de visibilidad de campos según tipo de bloque
+        const blockTypeSelects = document.querySelectorAll('[name="block_type"]');
+        blockTypeSelects.forEach(select => {
+          const form = select.closest('form');
+          if (!form) return;
+          
+          const fileField = form.querySelector('[data-file-field]');
+          const quizEditor = form.querySelector('[data-quiz-editor]');
+          
+          function updateFieldsVisibility() {
+            const blockType = select.value;
+            if (blockType === 'quiz') {
+              if (fileField) fileField.style.display = 'none';
+              if (quizEditor) quizEditor.style.display = 'block';
+            } else if (blockType === 'image' || blockType === 'video' || blockType === 'pdf') {
+              if (fileField) fileField.style.display = 'block';
+              if (quizEditor) quizEditor.style.display = 'none';
+            } else {
+              if (fileField) fileField.style.display = 'none';
+              if (quizEditor) quizEditor.style.display = 'none';
+            }
+          }
+          
+          select.addEventListener('change', updateFieldsVisibility);
+          updateFieldsVisibility(); // Llamar al cargar
+        });
+        
+        // Cargar preguntas existentes si estamos editando un cuestionario
+        {% if selected_content and selected_content.block_type == 'quiz' and selected_content.exam and selected_content.exam.questions %}
+          setTimeout(function() {
+            const existingQuestions = {{ selected_content.exam.questions|safe }};
+            const container = document.getElementById('questions-container-edit');
+            
+            if (container && existingQuestions && existingQuestions.length > 0) {
+              existingQuestions.forEach(question => {
+                const questionId = questionIdCounterEdit++;
+                
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-block';
+                questionDiv.dataset.questionId = questionId;
+                questionDiv.innerHTML = `
+                  <div class="question-header">
+                    <h4>Pregunta ${questionId + 1}</h4>
+                    <button type="button" class="btn-danger-small" onclick="removeQuestionEdit(${questionId})">✕ Eliminar</button>
+                  </div>
+                  <div class="form-group">
+                    <label>Enunciado de la pregunta</label>
+                    <input type="text" class="question-text" placeholder="Escribe la pregunta aquí" value="${question.text.replace(/"/g, '&quot;')}" required>
+                  </div>
+                  <div class="form-group">
+                    <label>Tipo de respuesta</label>
+                    <select class="question-type" onchange="updateAnswerTypeEdit(${questionId})">
+                      <option value="single" ${question.type === 'single' ? 'selected' : ''}>Selección única</option>
+                      <option value="multiple" ${question.type === 'multiple' ? 'selected' : ''}>Selección múltiple</option>
+                    </select>
+                  </div>
+                  <div class="answers-container" data-question-id="${questionId}">
+                    <label>Opciones de respuesta</label>
+                    <div class="answers-list"></div>
+                    <button type="button" class="btn-secondary-small" onclick="addAnswerEdit(${questionId})">+ Agregar opción</button>
+                  </div>
+                `;
+                
+                container.appendChild(questionDiv);
+                
+                // Agregar las respuestas existentes
+                const answersList = questionDiv.querySelector('.answers-list');
+                question.answers.forEach((answer, answerIdx) => {
+                  const answerDiv = document.createElement('div');
+                  answerDiv.className = 'answer-item';
+                  answerDiv.dataset.answerId = answerIdx;
+                  answerDiv.innerHTML = `
+                    <input type="${question.type === 'single' ? 'radio' : 'checkbox'}" 
+                           name="correct_edit_${questionId}" 
+                           value="${answerIdx}"
+                           ${answer.is_correct ? 'checked' : ''}
+                           title="Marcar como correcta">
+                    <input type="text" 
+                           class="answer-text" 
+                           placeholder="Opción ${answerIdx + 1}" 
+                           value="${answer.text.replace(/"/g, '&quot;')}"
+                           oninput="updateQuestionsDataEdit()" 
+                           required>
+                    <button type="button" class="btn-remove-answer" onclick="removeAnswerEdit(${questionId}, ${answerIdx})">✕</button>
+                  `;
+                  answersList.appendChild(answerDiv);
+                });
+              });
+              
+              updateQuestionsDataEdit();
+            }
+          }, 100);
+        {% endif %}
       })
+      
+      // Variables globales para el quiz editor
+      let questionIdCounter = 0;
+      let questionsData = [];
+      
+      function addQuestion() {
+        const questionId = questionIdCounter++;
+        const container = document.getElementById('questions-container');
+        
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-block';
+        questionDiv.dataset.questionId = questionId;
+        questionDiv.innerHTML = `
+          <div class="question-header">
+            <h4>Pregunta ${questionId + 1}</h4>
+            <button type="button" class="btn-danger-small" onclick="removeQuestion(${questionId})">✕ Eliminar</button>
+          </div>
+          <div class="form-group">
+            <label>Enunciado de la pregunta</label>
+            <input type="text" class="question-text" placeholder="Escribe la pregunta aquí" required>
+          </div>
+          <div class="form-group">
+            <label>Tipo de respuesta</label>
+            <select class="question-type" onchange="updateAnswerType(${questionId})">
+              <option value="single">Selección única</option>
+              <option value="multiple">Selección múltiple</option>
+            </select>
+          </div>
+          <div class="answers-container" data-question-id="${questionId}">
+            <label>Opciones de respuesta</label>
+            <div class="answers-list"></div>
+            <button type="button" class="btn-secondary-small" onclick="addAnswer(${questionId})">+ Agregar opción</button>
+          </div>
+        `;
+        
+        container.appendChild(questionDiv);
+        
+        // Agregar 2 opciones por defecto
+        addAnswer(questionId);
+        addAnswer(questionId);
+        
+        updateQuestionsData();
+      }
+      
+      function removeQuestion(questionId) {
+        const questionBlock = document.querySelector(`[data-question-id="${questionId}"]`).closest('.question-block');
+        questionBlock.remove();
+        updateQuestionsData();
+        renumberQuestions();
+      }
+      
+      function addAnswer(questionId) {
+        const answersList = document.querySelector(`[data-question-id="${questionId}"] .answers-list`);
+        const answerId = answersList.children.length;
+        const questionBlock = document.querySelector(`[data-question-id="${questionId}"]`).closest('.question-block');
+        const questionType = questionBlock.querySelector('.question-type').value;
+        
+        const answerDiv = document.createElement('div');
+        answerDiv.className = 'answer-item';
+        answerDiv.dataset.answerId = answerId;
+        answerDiv.innerHTML = `
+          <input type="${questionType === 'single' ? 'radio' : 'checkbox'}" 
+                 name="correct_${questionId}" 
+                 value="${answerId}"
+                 onchange="updateQuestionsData()"
+                 title="Marcar como correcta">
+          <input type="text" 
+                 class="answer-text" 
+                 placeholder="Opción ${answerId + 1}" 
+                 oninput="updateQuestionsData()" 
+                 required>
+          <button type="button" class="btn-remove-answer" onclick="removeAnswer(${questionId}, ${answerId})">✕</button>
+        `;
+        
+        answersList.appendChild(answerDiv);
+        updateQuestionsData();
+      }
+      
+      function removeAnswer(questionId, answerId) {
+        const answerItem = document.querySelector(`[data-question-id="${questionId}"] .answers-list [data-answer-id="${answerId}"]`);
+        answerItem.remove();
+        updateQuestionsData();
+      }
+      
+      function updateAnswerType(questionId) {
+        const questionBlock = document.querySelector(`[data-question-id="${questionId}"]`).closest('.question-block');
+        const questionType = questionBlock.querySelector('.question-type').value;
+        const answersList = questionBlock.querySelector('.answers-list');
+        const inputs = answersList.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+        
+        inputs.forEach(input => {
+          const newInput = document.createElement('input');
+          newInput.type = questionType === 'single' ? 'radio' : 'checkbox';
+          newInput.name = input.name;
+          newInput.value = input.value;
+          newInput.checked = input.checked;
+          newInput.title = 'Marcar como correcta';
+          newInput.onchange = updateQuestionsData; // Add event listener
+          input.replaceWith(newInput);
+        });
+        
+        updateQuestionsData();
+      }
+      
+      function updateQuestionsData() {
+        const questions = [];
+        document.querySelectorAll('#questions-container .question-block').forEach(block => {
+          const questionId = block.dataset.questionId;
+          const questionText = block.querySelector('.question-text').value;
+          const questionType = block.querySelector('.question-type').value;
+          
+          const answers = [];
+          const answersList = block.querySelector('.answers-list');
+          answersList.querySelectorAll('.answer-item').forEach(answerItem => {
+            const answerId = answerItem.dataset.answerId;
+            const answerText = answerItem.querySelector('.answer-text').value;
+            const isCorrect = answerItem.querySelector('input[type="radio"], input[type="checkbox"]').checked;
+            
+            if (answerText.trim()) {
+              answers.push({
+                id: answerId,
+                text: answerText,
+                is_correct: isCorrect
+              });
+            }
+          });
+          
+          if (questionText.trim() && answers.length > 0) {
+            questions.push({
+              id: questionId,
+              text: questionText,
+              type: questionType,
+              answers: answers
+            });
+          }
+        });
+        
+        const hiddenInput = document.getElementById('quiz_questions') || document.getElementById('quiz_questions_edit');
+        if (hiddenInput) {
+          hiddenInput.value = JSON.stringify(questions);
+        }
+      }
+      
+      function renumberQuestions() {
+        document.querySelectorAll('#questions-container .question-block').forEach((block, index) => {
+          block.querySelector('.question-header h4').textContent = `Pregunta ${index + 1}`;
+        });
+      }
+      
+      // ============ FUNCIONES PARA FORMULARIO DE EDICIÓN INLINE ============
+      let questionIdCounterInline = 0;
+      
+      function addQuestionInline() {
+        const questionId = questionIdCounterInline++;
+        const container = document.getElementById('questions-container-inline');
+        
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question-block';
+        questionDiv.dataset.questionId = questionId;
+        questionDiv.innerHTML = `
+          <div class="question-header">
+            <h4>Pregunta ${questionId + 1}</h4>
+            <button type="button" class="btn-danger-small" onclick="removeQuestionInline(${questionId})">✕ Eliminar</button>
+          </div>
+          <div class="form-group">
+            <label>Enunciado de la pregunta</label>
+            <input type="text" class="question-text" placeholder="Escribe la pregunta aquí" oninput="updateQuestionsDataInline()" required>
+          </div>
+          <div class="form-group">
+            <label>Tipo de respuesta</label>
+            <select class="question-type" onchange="updateAnswerTypeInline(${questionId})">
+              <option value="single">Selección única</option>
+              <option value="multiple">Selección múltiple</option>
+            </select>
+          </div>
+          <div class="answers-container" data-question-id="${questionId}">
+            <label>Opciones de respuesta</label>
+            <div class="answers-list"></div>
+            <button type="button" class="btn-secondary-small" onclick="addAnswerInline(${questionId})">+ Agregar opción</button>
+          </div>
+        `;
+        
+        container.appendChild(questionDiv);
+        
+        // Agregar 2 opciones por defecto
+        addAnswerInline(questionId);
+        addAnswerInline(questionId);
+        
+        updateQuestionsDataInline();
+      }
+      
+      function removeQuestionInline(questionId) {
+        const questionBlock = document.querySelector(`#questions-container-inline [data-question-id="${questionId}"]`).closest('.question-block');
+        questionBlock.remove();
+        updateQuestionsDataInline();
+        renumberQuestionsInline();
+      }
+      
+      function addAnswerInline(questionId) {
+        const answersList = document.querySelector(`#questions-container-inline [data-question-id="${questionId}"] .answers-list`);
+        const answerId = answersList.children.length;
+        const questionBlock = document.querySelector(`#questions-container-inline [data-question-id="${questionId}"]`).closest('.question-block');
+        const questionType = questionBlock.querySelector('.question-type').value;
+        
+        const answerDiv = document.createElement('div');
+        answerDiv.className = 'answer-item';
+        answerDiv.dataset.answerId = answerId;
+        answerDiv.innerHTML = `
+          <input type="${questionType === 'single' ? 'radio' : 'checkbox'}" 
+                 name="correct_inline_${questionId}" 
+                 value="${answerId}"
+                 onchange="updateQuestionsDataInline()"
+                 title="Marcar como correcta">
+          <input type="text" 
+                 class="answer-text" 
+                 placeholder="Opción ${answerId + 1}" 
+                 oninput="updateQuestionsDataInline()" 
+                 required>
+          <button type="button" class="btn-remove-answer" onclick="removeAnswerInline(${questionId}, ${answerId})">✕</button>
+        `;
+        
+        answersList.appendChild(answerDiv);
+        updateQuestionsDataInline();
+      }
+      
+      function removeAnswerInline(questionId, answerId) {
+        const answerItem = document.querySelector(`#questions-container-inline [data-question-id="${questionId}"] .answers-list [data-answer-id="${answerId}"]`);
+        answerItem.remove();
+        updateQuestionsDataInline();
+      }
+      
+      function updateAnswerTypeInline(questionId) {
+        const questionBlock = document.querySelector(`#questions-container-inline [data-question-id="${questionId}"]`).closest('.question-block');
+        const questionType = questionBlock.querySelector('.question-type').value;
+        const answersList = questionBlock.querySelector('.answers-list');
+        const inputs = answersList.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+        
+        inputs.forEach(input => {
+          const newInput = document.createElement('input');
+          newInput.type = questionType === 'single' ? 'radio' : 'checkbox';
+          newInput.name = input.name;
+          newInput.value = input.value;
+          newInput.checked = input.checked;
+          newInput.title = 'Marcar como correcta';
+          newInput.onchange = updateQuestionsDataInline; // Add event listener
+          input.replaceWith(newInput);
+        });
+        
+        updateQuestionsDataInline();
+      }
+      
+      function updateQuestionsDataInline() {
+        const questions = [];
+        document.querySelectorAll('#questions-container-inline .question-block').forEach(block => {
+          const questionId = block.dataset.questionId;
+          const questionText = block.querySelector('.question-text').value;
+          const questionType = block.querySelector('.question-type').value;
+          
+          const answers = [];
+          const answersList = block.querySelector('.answers-list');
+          answersList.querySelectorAll('.answer-item').forEach(answerItem => {
+            const answerId = answerItem.dataset.answerId;
+            const answerText = answerItem.querySelector('.answer-text').value;
+            const isCorrect = answerItem.querySelector('input[type="radio"], input[type="checkbox"]').checked;
+            
+            if (answerText.trim()) {
+              answers.push({
+                id: answerId,
+                text: answerText,
+                is_correct: isCorrect
+              });
+            }
+          });
+          
+          if (questionText.trim() && answers.length > 0) {
+            questions.push({
+              id: questionId,
+              text: questionText,
+              type: questionType,
+              answers: answers
+            });
+          }
+        });
+        
+        const hiddenInput = document.getElementById('quiz_questions_inline');
+        if (hiddenInput) {
+          hiddenInput.value = JSON.stringify(questions);
+        }
+      }
+      
+      function renumberQuestionsInline() {
+        document.querySelectorAll('#questions-container-inline .question-block').forEach((block, index) => {
+          block.querySelector('.question-header h4').textContent = `Pregunta ${index + 1}`;
+        });
+      }
+      
+      // Cargar preguntas existentes en modo inline
+      document.addEventListener('DOMContentLoaded', function() {
+        const questionsDataScript = document.getElementById('existing-questions-data');
+        if (questionsDataScript) {
+            try {
+                const existingQuestions = JSON.parse(questionsDataScript.textContent);
+                const container = document.getElementById('questions-container-inline');
+                
+                if (container && Array.isArray(existingQuestions)) {
+                    existingQuestions.forEach(question => {
+                        const questionId = questionIdCounterInline++;
+                        
+                        const questionDiv = document.createElement('div');
+                        questionDiv.className = 'question-block';
+                        questionDiv.dataset.questionId = questionId;
+                        
+                        // Escape values safely
+                        const qText = question.text ? question.text.replace(/"/g, '&quot;') : '';
+                        
+                        questionDiv.innerHTML = `
+                          <div class="question-header">
+                            <h4>Pregunta ${questionId + 1}</h4>
+                            <button type="button" class="btn-danger-small" onclick="removeQuestionInline(${questionId})">✕ Eliminar</button>
+                          </div>
+                          <div class="form-group">
+                            <label>Enunciado de la pregunta</label>
+                            <input type="text" class="question-text" placeholder="Escribe la pregunta aquí" value="${qText}" oninput="updateQuestionsDataInline()" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Tipo de respuesta</label>
+                            <select class="question-type" onchange="updateAnswerTypeInline(${questionId})">
+                              <option value="single" ${question.type === 'single' ? 'selected' : ''}>Selección única</option>
+                              <option value="multiple" ${question.type === 'multiple' ? 'selected' : ''}>Selección múltiple</option>
+                            </select>
+                          </div>
+                          <div class="answers-container" data-question-id="${questionId}">
+                            <label>Opciones de respuesta</label>
+                            <div class="answers-list"></div>
+                            <button type="button" class="btn-secondary-small" onclick="addAnswerInline(${questionId})">+ Agregar opción</button>
+                          </div>
+                        `;
+                        
+                        container.appendChild(questionDiv);
+                        
+                        // Agregar las respuestas existentes
+                        const answersList = questionDiv.querySelector('.answers-list');
+                        if (question.answers && Array.isArray(question.answers)) {
+                            question.answers.forEach((answer, answerIdx) => {
+                                const answerDiv = document.createElement('div');
+                                answerDiv.className = 'answer-item';
+                                answerDiv.dataset.answerId = answerIdx;
+                                
+                                const aText = answer.text ? answer.text.replace(/"/g, '&quot;') : '';
+                                
+                                answerDiv.innerHTML = `
+                                    <input type="${question.type === 'single' ? 'radio' : 'checkbox'}" 
+                                           name="correct_inline_${questionId}" 
+                                           value="${answerIdx}"
+                                           ${answer.is_correct ? 'checked' : ''}
+                                           onchange="updateQuestionsDataInline()"
+                                           title="Marcar como correcta">
+                                    <input type="text" 
+                                           class="answer-text" 
+                                           placeholder="Opción ${answerIdx + 1}" 
+                                           value="${aText}"
+                                           oninput="updateQuestionsDataInline()" 
+                                           required>
+                                    <button type="button" class="btn-remove-answer" onclick="removeAnswerInline(${questionId}, ${answerIdx})">✕</button>
+                                `;
+                                answersList.appendChild(answerDiv);
+                            });
+                        }
+                    });
+                    
+                    updateQuestionsDataInline();
+                }
+            } catch (e) {
+                console.error("Error loading quiz questions:", e);
+            }
+        }
+      });
     </script>
   </div>
 {% endblock %}
