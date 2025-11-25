@@ -78,8 +78,28 @@
         <!-- Imagen de portada -->
         <div class="form-group">
           <label for="{{ form.header_img.id_for_label }}">{{ form.header_img.label }}</label>
-          {{ form.header_img }}
-          <div class="field-help">Sube una imagen para la portada del curso</div>
+
+          {% if course and course.header_img %}
+            <div class="current-image-preview">
+              <img src="{{ course.header_img.url }}" alt="Portada actual" class="preview-img" />
+              <p class="preview-label">Imagen actual</p>
+            </div>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" name="header_img-clear" id="header_img-clear_id" />
+                <span>Eliminar imagen actual</span>
+              </label>
+            </div>
+          {% endif %}
+
+          <div class="file-input-only">{{ form.header_img }}</div>
+          <div class="field-help">
+            {% if course and course.header_img %}
+              Sube una nueva imagen para reemplazar la actual
+            {% else %}
+              Sube una imagen para la portada del curso
+            {% endif %}
+          </div>
           {% if form.header_img.errors %}
             <div class="field-error">{{ form.header_img.errors }}</div>
           {% endif %}

@@ -75,6 +75,7 @@
 .form-group textarea,
 .form-group select {
     width: 100%;
+    max-width: 100%;
     padding: 0.625rem 0.875rem;
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
@@ -82,6 +83,7 @@
     color: #111827;
     background-color: white;
     font-family: inherit;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -109,6 +111,81 @@
     font-size: 0.75rem;
     color: #dc2626;
     margin-top: 0.375rem;
+}
+
+/* Image Preview */
+.current-image-preview {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    text-align: center;
+    overflow: hidden;
+}
+
+.preview-img {
+    max-width: 100%;
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    border-radius: 0.5rem;
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    object-fit: contain;
+}
+
+.preview-label {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.checkbox-group {
+    margin-bottom: 1rem;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    accent-color: #d4af37;
+}
+
+/* Ocultar el link y checkbox generados por Django */
+.file-input-only {
+    font-size: 0;
+    /* Ocultar todo el texto */
+}
+
+.file-input-only input[type="file"] {
+    font-size: 0.875rem;
+    /* Restaurar tamaño para el input */
+}
+
+.file-input-only a,
+.file-input-only input[type="checkbox"] {
+    display: none !important;
+}
+
+.file-input-only label {
+    display: none !important;
+}
+
+.file-input-only br {
+    display: none !important;
 }
 
 /* Form Row (2 columnas) */

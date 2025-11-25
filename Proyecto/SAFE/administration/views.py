@@ -205,7 +205,23 @@ def content_create(request, module_pk):
     )
 
     content_form = ContentForm(request.POST)
-    material_form = MaterialForm(request.POST, request.FILES)
+
+    # Determinar el tipo esperado según el block_type
+    block_type = request.POST.get("block_type")
+    expected_type = None
+    if block_type == Content.BlockType.IMAGE:
+        expected_type = "jpg"
+    elif block_type == Content.BlockType.VIDEO:
+        expected_type = "mp4"
+    elif block_type == Content.BlockType.PDF:
+        expected_type = "pdf"
+
+    # Agregar expected_type a los datos del formulario
+    material_data = request.POST.copy()
+    if expected_type:
+        material_data["expected_type"] = expected_type
+
+    material_form = MaterialForm(material_data, request.FILES)
 
     if content_form.is_valid():
         content = content_form.save(commit=False)
@@ -224,13 +240,27 @@ def content_create(request, module_pk):
             Content.BlockType.PDF,
         ):
             if material_form.is_valid() and material_form.cleaned_data.get("file"):
-                material = material_form.save()
+                material = material_form.save(commit=False)
+                # Asignar tipo automáticamente según block_type
+                if block_type == Content.BlockType.IMAGE:
+                    material.type = "jpg"
+                elif block_type == Content.BlockType.VIDEO:
+                    material.type = "mp4"
+                elif block_type == Content.BlockType.PDF:
+                    material.type = "pdf"
+                material.save()
                 content.material = material
             else:
-                messages.error(
-                    request,
-                    "Adjunta un archivo para imágenes, videos o PDFs.",
-                )
+                # Mostrar errores específicos del formulario de material
+                if material_form.errors:
+                    for field, field_errors in material_form.errors.items():
+                        for error in field_errors:
+                            messages.error(request, f"Archivo: {error}")
+                else:
+                    messages.error(
+                        request,
+                        "Adjunta un archivo para imágenes, videos o PDFs.",
+                    )
                 return redirect(redirect_url)
 
         content.save()
@@ -257,8 +287,24 @@ def content_update(request, content_pk):
 
     content_form = ContentForm(request.POST, instance=content)
     material_instance = content.material if content.material else None
+
+    # Determinar el tipo esperado según el block_type
+    block_type = request.POST.get("block_type")
+    expected_type = None
+    if block_type == Content.BlockType.IMAGE:
+        expected_type = "jpg"
+    elif block_type == Content.BlockType.VIDEO:
+        expected_type = "mp4"
+    elif block_type == Content.BlockType.PDF:
+        expected_type = "pdf"
+
+    # Agregar expected_type a los datos del formulario
+    material_data = request.POST.copy()
+    if expected_type:
+        material_data["expected_type"] = expected_type
+
     material_form = MaterialForm(
-        request.POST, request.FILES, instance=material_instance
+        material_data, request.FILES, instance=material_instance
     )
 
     material_checked = False
@@ -290,16 +336,24 @@ def content_update(request, content_pk):
                         "Adjunta un archivo para imágenes, videos o PDFs.",
                     )
                 else:
-                    material = material_form.save()
+                    material = material_form.save(commit=False)
+                    # Asignar tipo automáticamente según block_type
+                    if block_type == Content.BlockType.IMAGE:
+                        material.type = "jpg"
+                    elif block_type == Content.BlockType.VIDEO:
+                        material.type = "mp4"
+                    elif block_type == Content.BlockType.PDF:
+                        material.type = "pdf"
+                    material.save()
                     updated_content.material = material
                     updated_content.exam = None
-            else:
-                messages.error(request, "Revisa los datos del archivo adjunto.")
+            # Si el formulario no es válido, no continuar
         else:
             updated_content.material = None
             updated_content.exam = None
 
-        if not material_form.errors:
+        # Solo guardar si no hay errores en el material form cuando se verificó
+        if not material_checked or not material_form.errors:
             updated_content.save()
             messages.success(request, "Contenido actualizado.")
     else:

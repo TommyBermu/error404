@@ -39,6 +39,42 @@ body {
     color: var(--safe-dark);
 }
 
+.messages-container {
+    margin-bottom: 24px;
+}
+
+.message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    border: 1px solid;
+}
+
+.message-success {
+    background-color: #d1fae5;
+    border-color: #6ee7b7;
+    color: #065f46;
+}
+
+.message-error {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.message-warning {
+    background-color: #fef3c7;
+    border-color: #fcd34d;
+    color: #92400e;
+}
+
+.message-info {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
 .course-summary {
     background: var(--safe-card);
     border: 1px solid var(--safe-border);
@@ -552,6 +588,10 @@ body {
 
 .form-field-full {
     grid-column: 1 / -1;
+}
+
+.form-field-half {
+    grid-column: span 1;
 }
 
 .form-field-title {

@@ -14,6 +14,7 @@
     <div class="breadcrumb">
       <a href="{% url 'admin_panel' %}?tab=cursos">← Volver a Administración</a>
     </div>
+
     <div class="course-summary">
       <div class="course-header">
         <div class="course-header-content">
@@ -195,7 +196,7 @@
                         </div>
 
                         {% if selected_content and selected_content.pk == content.pk and content_edit_form %}
-                          <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor">
+                          <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor" data-content-form>
                             {% csrf_token %}
                             <div class="form-grid">
                               <div class="form-field form-field-title">
@@ -272,8 +273,9 @@
                               </div>
                               <div class="form-field form-field-full file-field">
                                 <label>Archivo (imagen/video/pdf)</label>
+                                {{ material_form.expected_type }}
                                 <div class="file-input-wrapper">{{ material_form.file }}</div>
-                                <small class="field-hint">Solo necesario para bloques multimedia.</small>
+                                <small class="field-hint">El tipo se determina automáticamente según el "Tipo de bloque" seleccionado arriba.</small>
                               </div>
                             </div>
                             <div class="content-form__actions">
@@ -290,7 +292,7 @@
               <div class="empty-state-small">No hay contenidos en este módulo.</div>
               <div class="inspector-card" style="margin-top:16px;">
                 <h4 class="inspector-subtitle">Agregar el primer bloque</h4>
-                <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form">
+                <form method="post" enctype="multipart/form-data" action="{% url 'content_create' selected_module.pk %}" class="content-form" data-content-form>
                   {% csrf_token %}
                   <div class="form-grid">
                     <div class="form-field form-field-title">
@@ -313,8 +315,9 @@
                     </div>
                     <div class="form-field form-field-full file-field">
                       <label>Archivo (imagen/video/pdf)</label>
+                      {{ material_form.expected_type }}
                       <div class="file-input-wrapper">{{ material_form.file }}</div>
-                      <small class="field-hint">Solo necesario para bloques multimedia.</small>
+                      <small class="field-hint">El tipo se determina automáticamente según el "Tipo de bloque" seleccionado arriba.</small>
                     </div>
                   </div>
                   <div class="content-form__actions">
@@ -357,7 +360,67 @@
     </div>
 
     <script>
+      // Validación de archivos según tipo de bloque
+      function validateFileForBlockType(form) {
+        const blockTypeSelect = form.querySelector('[name="block_type"]')
+        const fileInput = form.querySelector('[name="file"]')
+      
+        if (!blockTypeSelect) {
+          return true
+        }
+      
+        const blockType = blockTypeSelect.value
+      
+        // Definir extensiones válidas por tipo de bloque
+        const validExtensions = {
+          image: ['jpg', 'jpeg'], // Solo JPG/JPEG según MaterialType
+          video: ['mp4'], // Solo MP4 según MaterialType
+          pdf: ['pdf'] // Solo PDF según MaterialType
+        }
+      
+        // Solo validar si es un bloque multimedia
+        if (!validExtensions[blockType]) {
+          return true // No es bloque multimedia, continuar
+        }
+      
+        let fileName = null
+        let extension = null
+      
+        // Si hay archivo nuevo, usar ese
+        if (fileInput && fileInput.files.length > 0) {
+          const file = fileInput.files[0]
+          fileName = file.name.toLowerCase()
+          extension = fileName.split('.').pop()
+        } else {
+          // Si no hay archivo nuevo, buscar el archivo existente en el DOM
+          const existingFileLink = form.querySelector('a[href*="/media/"]')
+          if (existingFileLink) {
+            fileName = existingFileLink.href.toLowerCase()
+            extension = fileName.split('.').pop().split('?')[0] // Quitar parámetros de URL si existen
+          }
+        }
+      
+        // Si tenemos una extensión, validarla
+        if (extension && !validExtensions[blockType].includes(extension)) {
+          const expectedTypes = validExtensions[blockType].join(', ').toUpperCase()
+          alert(`Error: El archivo debe ser de tipo ${expectedTypes}.\nEl archivo actual es ${extension.toUpperCase()}.`)
+          return false
+        }
+      
+        return true
+      }
+      
       document.addEventListener('DOMContentLoaded', function () {
+        // Interceptar submit de formularios de contenido
+        const contentForms = document.querySelectorAll('[data-create-form], [data-content-form], form[action*="content_update"]')
+        contentForms.forEach((form) => {
+          form.addEventListener('submit', function (e) {
+            if (!validateFileForBlockType(this)) {
+              e.preventDefault()
+            }
+          })
+        })
+      
         const notebook = document.getElementById('content-notebook')
         if (!notebook) return
         const activeBlock = notebook.querySelector('.content-block.is-active')
