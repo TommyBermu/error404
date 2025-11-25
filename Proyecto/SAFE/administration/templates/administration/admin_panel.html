@@ -22,77 +22,107 @@
 
     <!-- USUARIOS -->
     {% if active_tab == 'usuarios' %}
-      <div class="tab-panel">
-        <div class="admin-section">
-          <div class="section-header">
-            <h2 class="section-title">Gestión de usuarios</h2>
-            <button class="btn-primary">Nuevo usuario</button>
-          </div>
+      <div class="section-header">
+        <h2>Gestión de usuarios</h2>
+        <a class="btn-nuevo">Nuevo usuario</a>
+      </div>
 
-          <table class="table">
-            <thead>
+      <div class="tab-panel">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width:80px">ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th style="width:140px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in usuarios %}
               <tr>
-                <th style="width:80px">ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th style="width:140px"></th>
+                <td>{{ u.id }}</td>
+                <td>{{ u.username }}</td>
+                <td>{{ u.email }}</td>
+                <td>
+                  <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</button>
+                  </form>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {% for u in usuarios %}
-                <tr>
-                  <td>{{ u.id }}</td>
-                  <td>{{ u.username }}</td>
-                  <td>{{ u.email }}</td>
-                  <td>
-                    <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
-                      {% csrf_token %}
-                      <button class="btn btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</button>
-                    </form>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td class="empty" colspan="4">Sin usuarios</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+            {% empty %}
+              <tr>
+                <td class="empty" colspan="4">Sin usuarios</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     {% endif %}
 
     <!-- CURSOS -->
     {% if active_tab == 'cursos' %}
-      <div class="tab-panel">
-        <div class="admin-section">
-          <div class="section-header">
-            <h2 class="section-title">Cursos disponibles</h2>
-            <button class="btn-primary">Nuevo</button>
-          </div>
-        </div>
+      <div class="section-header">
+        <h2>Cursos disponibles</h2>
+        <a href="{% url 'course_create' %}" class="btn-primary">Nuevo</a>
       </div>
+
+      {% if courses %}
+        <div class="courses-grid">
+          {% for course in courses %}
+            <div class="course-card">
+              <div class="course-header">
+                <!-- Aca poner el renderizado de la imagen -->
+              </div>
+              <div class="course-body">
+                <div class="course-title-row">
+                  <h3>{{ course.name }}</h3>
+                  <span class="badge badge-{{ course.status }}">{{ course.get_status_display }}</span>
+                </div>
+                <p class="course-description">{{ course.description|default:'Sin descripción' }}</p>
+                <div class="course-meta">
+                  <span>{{ course.duration_hours|default:'--' }}h</span>
+                  <span>{{ course.modules.count }} módulos</span>
+                </div>
+                <div class="course-actions">
+                  <a href="{% url 'course_detail' course.pk %}" class="btn-secondary">Ver</a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>No hay cursos creados</p>
+          <a href="{% url 'course_create' %}" class="btn-primary">Crear primer curso</a>
+        </div>
+      {% endif %}
     {% endif %}
 
     <!-- RUTAS -->
     {% if active_tab == 'rutas' %}
-      <div class="tab-panel">
-        <div class="admin-section">
-          <div class="section-header">
-            <h2 class="section-title">Rutas de aprendizaje</h2>
-            <button class="btn-primary">Nueva ruta</button>
-          </div>
-        </div>
+      <div class="section-header">
+        <h2>Rutas de aprendizaje</h2>
+        <a class="btn-nuevo">Nueva ruta</a>
       </div>
+
+      {% if rutas %}
+
+      {% else %}
+        <div class="empty-state">
+          <p>No hay rutas creadas</p>
+          <a class="btn-primary">Crear primer ruta</a>
+        </div>
+      {% endif %}
     {% endif %}
 
     <!-- ESTADÍSTICAS -->
     {% if active_tab == 'estadisticas' %}
-      <div class="tab-panel">
-        <div class="admin-section">
-          <h2 class="section-title">Estadísticas y KPIs</h2>
-          <div class="empty-state">Gráficos y estadísticas aquí</div>
-        </div>
+      <div class="section-header">
+        <h2>Estadísticas y KPIs</h2>
+      </div>
+      <div>
+        <div class="empty-state">Gráficos y estadísticas aquí</div>
       </div>
     {% endif %}
   </div>

@@ -6,6 +6,7 @@ from django.db import transaction
 from .models import AppUser
 from .password_validator import is_valid_password
 
+
 def login(request):
     
     return render(request, "accounts/login.html")
@@ -18,8 +19,10 @@ def login(request):
 
     # return True
 
+
 def profile(request):
     return render(request, "accounts/profile.html")
+
 
 @require_POST
 def log(request):
