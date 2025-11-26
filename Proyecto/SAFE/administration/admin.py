@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+# El usuario ya se registra en accounts/admin.py con UserAdmin personalizado.
+# Si se necesita registrar otros modelos de 'administration', agréguelos aquí.
 from accounts.models import AppUser
 
 @admin.register(AppUser)
@@ -11,7 +13,7 @@ class AppUserAdmin(admin.ModelAdmin):
     # Permite editar el rol directamente
     fieldsets = (
         ('Información básica', {
-            'fields': ('username', 'email', 'first_name', 'last_name')
+            'fields': ('username', 'email', 'first_name', 'last_name' , 'password')
         }),
         ('Permisos y rol', {
             'fields': ('role', 'status', 'is_staff', 'is_superuser', 'is_active')

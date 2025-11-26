@@ -1,4 +1,3 @@
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.views.decorators.http import require_POST
@@ -8,7 +7,7 @@ from .password_validator import is_valid_password
 
 
 def login(request):
-    
+    " Muestra el formulario de inicio de sesion"
     return render(request, "accounts/login.html")
     # try:
     #     AppUser.objects.get(email = request.POST.get("email"))
@@ -26,29 +25,22 @@ def profile(request):
 
 @require_POST
 def log(request):
-    # username = request.POST.get("username", "").strip()
-    # email = request.POST.get("email", "").strip()
-    # if username and email:
-    #     with transaction.atomic():
-    #         AppUser.objects.create(username=username, email=email)
-    # return redirect("login")
-   
-   #crear usuario de prueba
-   
+    " Loguea al usuario si el email y contrasena son correctos"
+    
     AppUser.objects.create(username="testuser",email="testuser@example.com",password="testpassword",first_name="Test",last_name="User")   
 
     email = request.POST.get("email", "").strip()
     password = request.POST.get("password", "").strip()
     if not unique_email(email):
-        #messages.error(request, f"Email no encontrado: {email}")
         AppUser.objects.filter(email="testuser@example.com").delete()  # Eliminar usuario de prueba
-        return render(request, 'accounts/login.html', {'error_login': 'Email no existente'})
+        messages.error(request, "Email no existente")
+        return redirect("login")
 
     user = AppUser.objects.get(email=email)
     if user.password != password:
-        #messages.error(request, "Contraseña incorrecta")
         AppUser.objects.filter(email="testuser@example.com").delete()  # Eliminar usuario de prueba
-        return render(request, 'accounts/login.html', {'error_login': 'Contraseña incorrecta'})
+        messages.error(request, "Contraseña incorrecta")
+        return redirect("login")
     
     AppUser.objects.filter(email="testuser@example.com").delete()  # Eliminar usuario de prueba
     return redirect("catalog")
@@ -56,7 +48,7 @@ def log(request):
 
 
 def unique_email(email):
-    #codigo
+    " Verifica si el email existe en la base de datos "
     try:
         AppUser.objects.get(email = email)
         return True
@@ -90,11 +82,11 @@ def user_add(request):
         })
 
     if not is_valid_password(password):
-        error_msg = "La contraseña debe cumplir con todos los requisitos:\n" \
-            "- Mínimo 8 caracteres\n" \
-            "- Mínimo una mayúscula\n" \
-            "- Mínimo una minúscula\n" \
-            "- Mínimo un número\n" \
+        error_msg = "La contrase�a debe cumplir con todos los requisitos:\n" \
+            "- M�nimo 8 caracteres\n" \
+            "- M�nimo una may�scula\n" \
+            "- M�nimo una min�scula\n" \
+            "- M�nimo un n�mero\n" \
             "- No contener espacios"
         return render(request, "accounts/login.html", {
             "usuarios": list(AppUser.objects.order_by("id").values("id", "username", "email", "password")),

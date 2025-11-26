@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from .health import db_health
 
 urlpatterns = [
-    # path("admin/", admin.site.urls),
+    path("administration/", admin.site.urls),
     path("health/", db_health, name="health_db"),
     path("", include("accounts.urls")),
     path("admin/", include("administration.urls")),

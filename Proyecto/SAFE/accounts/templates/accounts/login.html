@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-  Iniciar Sesión — SAFE
+  Iniciar Sesión - SAFE
 {% endblock %}
 
 {% block extra_css %}
@@ -30,16 +30,24 @@
         <input id="password" name="password" placeholder="********" required type="password" class="input" />
 
         <div class="error-container">
-            {% if error_login %}
-                <span class="error-text">{{ error_login }}</span>
-            {% endif %}
+          {% if messages %}
+            {% for message in messages %}
+              <span class="error-text">{{ message }}</span>
+            {% endfor %}
+          {% endif %}
+          {% if error_login %}
+            <span class="error-text">{{ error_login }}</span>
+          {% endif %}
+          {% if error_msg %}
+            <span class="error-text">{{ error_msg }}</span>
+          {% endif %}
         </div>
 
         <div class="actions column-actions">
           <button class="btn btn-gold btn-full">Iniciar sesión</button>
         </div>
 
-    
+        
 
       </form>
     </div>

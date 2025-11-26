@@ -8,7 +8,11 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+    {% if request.path != "/login/" %}
     {% include 'includes/navbar.html' %}
+{% endif %}
+    
 
     <main class="main-content">
         {% block content %}
