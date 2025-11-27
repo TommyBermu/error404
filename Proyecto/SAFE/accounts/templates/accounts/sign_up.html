@@ -19,7 +19,7 @@
         <p class="subtitle">Únete a SAFE Academy</p>
       </header>
 
-      <form method="post" action="">
+      <form method="post" action= "{% url 'user_add' %}">
         {% csrf_token %}
 
         <div class="field-group">
@@ -53,8 +53,8 @@
         </div>
 
         <div class="error-container">
-            {% if error_signup %}
-                <span class="error-text">{{ error_signup }}</span>
+            {% if error_msg %}
+                <span class="error-text">{{ error_msg }}</span>
             {% endif %}
         </div>
 
