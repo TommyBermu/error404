@@ -32,7 +32,7 @@ echo "==========================================="
 echo "Esperando a que las migraciones terminen..."
 echo "==========================================="
 
-APPS=("accounts" "teams" "courses" "learning_paths" "enrollments" "notifications")
+APPS=("accounts" "teams" "courses" "learning_paths" "enrollments" "notifications" "administration")
 
 for app in "${APPS[@]}"; do
   docker compose exec -T web python manage.py makemigrations "$app" || true

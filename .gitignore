@@ -12,6 +12,7 @@ __pycache__/
 .env
 .idea/
 .vscode/
+.mypy_cache/
 migrations/
 temp/
 
@@ -22,3 +23,5 @@ coverage.xml
 coverage.json
 # Pytest
 .pytest_cache/
+media/
+.ruff_cache/
