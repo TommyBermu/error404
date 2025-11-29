@@ -66,10 +66,11 @@ def user_add(request):
     username = request.POST.get("username", "").strip()
     email = request.POST.get("email", "").strip()
     password = request.POST.get("password", "").strip()
+    confirm_password = request.POST.get("confirm_password", "").strip()
     first_name = request.POST.get("first_name", "").strip()
     last_name = request.POST.get("last_name" , "").strip()
 
-    if not (username and email and password):
+    if not (username and email and password and confirm_password):
         return redirect("signup")
 
     if AppUser.objects.filter(username=username).exists():
@@ -77,8 +78,9 @@ def user_add(request):
         return render(request, "accounts/sign_up.html", {
             "usuarios": list(AppUser.objects.order_by("id").values("id", "username", "email", "password")),
             "error_msg": error_msg,
-            "username": username,
             "email": email,
+            "first_name": first_name, 
+            "last_name": last_name
         })
     
     if  exisit_email(email):
@@ -88,9 +90,20 @@ def user_add(request):
             "usuarios": list(AppUser.objects.order_by("id").values("id", "username", "email", "password")),
             "error_msg": error_msg,
             "username": username,
-            "email": email,
+            "first_name": first_name, 
+            "last_name": last_name
         })
-
+    if password != confirm_password:
+        error_msg = "Las contraseñas no coinciden."
+        return render(request, "accounts/sign_up.html", {
+            "usuarios": list(AppUser.objects.order_by("id").values("id", "username", "email", "password")),
+            "error_msg": error_msg,
+            "username": username,
+            "email": email,
+            "first_name": first_name, 
+            "last_name": last_name
+        })
+    
     if not is_valid_password(password):
         error_msg = "La contraseña debe cumplir con todos los requisitos:\n" \
             "- Mínimo 8 caracteres\n" \
