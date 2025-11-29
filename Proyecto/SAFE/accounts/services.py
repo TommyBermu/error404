@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from .models import AppUser
+from .models import AppUser, RoleChangeLog
 
 
 def change_role(actor: AppUser, target: AppUser, new_role: str) -> bool:
@@ -23,7 +23,14 @@ def change_role(actor: AppUser, target: AppUser, new_role: str) -> bool:
         return False
 
     with transaction.atomic():
+        old_role = target.role
         target.role = new_role
         target.save(update_fields=["role", "updated_at"])
+        RoleChangeLog.objects.create(
+            changed_by=actor,
+            target_user=target,
+            old_role=old_role,
+            new_role=new_role,
+        )
 
     return True

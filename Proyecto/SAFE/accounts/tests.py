@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import AppUser
+from .models import AppUser, RoleChangeLog
 from accounts.views import unique_email
 from accounts.models import AppUser
 from accounts.services import change_role
@@ -242,6 +242,12 @@ class ChangeRoleServiceTests(TestCase):
         self.assertTrue(result)
         self.collaborator.refresh_from_db()
         self.assertEqual(self.collaborator.role, AppUser.UserRole.SUPERVISOR)
+
+        log_entry = RoleChangeLog.objects.get()
+        self.assertEqual(log_entry.changed_by, self.analyst)
+        self.assertEqual(log_entry.target_user, self.collaborator)
+        self.assertEqual(log_entry.old_role, AppUser.UserRole.COLABORADOR)
+        self.assertEqual(log_entry.new_role, AppUser.UserRole.SUPERVISOR)
 
 if __name__ == "__main__":
     unittest.main()
