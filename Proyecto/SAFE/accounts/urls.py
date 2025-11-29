@@ -9,4 +9,6 @@ urlpatterns = [
     path("signup/", views.to_signup, name="to_signup"),
     path("users/add/", views.user_add, name="user_add"),
     path("logout/", views.logout, name="logout"),
+    path('update-role/<int:pk>/', views.user_update_role, name='user_update_role'),
+    path('toggle-status/<int:pk>/', views.user_toggle_status, name='user_toggle_status'),
 ]

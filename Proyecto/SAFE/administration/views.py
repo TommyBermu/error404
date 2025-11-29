@@ -33,7 +33,7 @@ def admin_panel(request):
 
     learning_paths = []
 
-    usuarios = AppUser.objects.order_by("id").values("id", "username", "email")
+    usuarios = AppUser.objects.all().order_by("id")
 
     context = {
         "active_tab": active_tab,
@@ -421,3 +421,25 @@ def content_delete(request, content_pk):
     return redirect(
         reverse("course_detail", kwargs={"pk": course_pk}) + f"?module={module.pk}"
     )
+
+@login_required
+def user_delete(request, pk):
+    """
+    Elimina un usuario basado en su ID (pk).
+    Solo permite acceso a usuarios logueados (idealmente validar rol también).
+    """
+    # Buscamos el usuario o devolvemos error 404 si no existe
+    user_to_delete = get_object_or_404(AppUser, pk=pk)
+
+    # Protección: Evitar que el usuario se elimine a sí mismo
+    if user_to_delete == request.user:
+        messages.error(request, "No puedes eliminar tu propio usuario.")
+        return redirect("admin_panel") # Redirige de vuelta al panel
+
+    if request.method == "POST":
+        username = user_to_delete.username
+        user_to_delete.delete()
+        messages.success(request, f"Usuario '{username}' eliminado correctamente.")
+    
+    # Redirigimos al panel de administración (asegúrate que 'admin_panel' sea el name en administration/urls.py)
+    return redirect("admin_panel")

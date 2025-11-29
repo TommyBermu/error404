@@ -22,43 +22,93 @@
 
     <!-- USUARIOS -->
     {% if active_tab == 'usuarios' %}
-      <div class="section-header">
-        <h2>Gestión de usuarios</h2>
-        <a class="btn-nuevo">Nuevo usuario</a>
-      </div>
+  
+  <div class="card-panel">
+    
+    <div class="panel-header">
+      <h2 class="panel-title">Gestión de usuarios</h2>
+      <a href="{% url 'user_add' %}" class="btn btn-gold">Nuevo usuario</a>
+    </div>
 
-      <div class="tab-panel">
-        <table class="table">
-          <thead>
+    <div class="table-responsive">
+      <table class="table-custom">
+        <thead>
+          <tr>
+            <th class="th-name">Nombre</th>
+            <th class="th-email">Email</th>
+            <th class="th-role">Rol</th>
+            <th class="th-status">Estado</th>
+            <th class="th-actions text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
             <tr>
-              <th style="width:80px">ID</th>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th style="width:140px"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for u in usuarios %}
-              <tr>
-                <td>{{ u.id }}</td>
-                <td>{{ u.username }}</td>
-                <td>{{ u.email }}</td>
-                <td>
-                  <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
+              <td class="font-weight-medium">{{ u.name|default:u.username }}</td>
+              
+              <td class="text-muted">{{ u.email }}</td>
+              
+              <td>
+                <form method="post" action="{% url 'user_update_role' u.id %}">
+                  {% csrf_token %}
+                  
+                  <select name="role" class="role-select" onchange="this.form.submit()">
+                    
+                    <option value="colaborador" {% if u.role == 'colaborador' %}selected{% endif %}>
+                      Colaborador
+                    </option>
+                    
+                    <option value="supervisor" {% if u.role == 'supervisor' %}selected{% endif %}>
+                      Supervisor
+                    </option>
+                    
+                    <option value="analistaTH" {% if u.role == 'analistaTH' %}selected{% endif %}>
+                      Analista TH
+                    </option>
+                    
+                  </select>
+                </form>
+              </td>
+              
+              <td>
+                <span class="status-badge status-{{ u.status }}">
+                  {{ u.get_status_display }}
+                </span>
+              </td>
+              
+              <td class="text-right">
+                <div class="actions-group">
+                  
+                  <form method="post" action="{% url 'user_toggle_status' u.id %}" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</button>
+                    
+                    {% if u.status == 'active' %}
+                      <button type="submit" class="action-link text-danger" title="Desactivar usuario">
+                        Desactivar
+                      </button>
+                    
+                    {% else %}
+                      <button type="submit" class="action-link text-success" title="Activar usuario">
+                        Activar
+                      </button>
+                    {% endif %}
+                    
                   </form>
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td class="empty" colspan="4">Sin usuarios</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
+
+                  <a href="#" class="action-link text-primary">Inscribir a curso</a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="empty-state">No hay usuarios registrados.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
 
     <!-- CURSOS -->
     {% if active_tab == 'cursos' %}

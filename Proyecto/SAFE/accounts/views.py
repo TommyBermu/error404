@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.db import transaction
@@ -6,7 +6,7 @@ from .models import AppUser
 from .password_validator import is_valid_password
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
-
+from django.contrib.auth.decorators import login_required
 
 def login(request):
     " Muestra el formulario de inicio de sesion"
@@ -124,6 +124,55 @@ def user_add(request):
         user.save()
     return redirect("login")
 
+@login_required
+@require_POST
+def user_update_role(request, pk):
+    """
+    Actualiza el rol de un usuario específico.
+    Se activa automáticamente al cambiar el select en el panel de admin.
+    """
+    user_to_update = get_object_or_404(AppUser, pk=pk)
+
+    if user_to_update == request.user:
+        messages.error(request, "No puedes cambiar tu propio rol desde aquí.")
+        return redirect("admin_panel")
+
+    new_role = request.POST.get("role")
+    allowed_roles = ['colaborador', 'supervisor', 'analistaTH']
+    
+    if new_role in allowed_roles:
+        user_to_update.role = new_role
+        user_to_update.save()
+        messages.success(request, f"Rol de {user_to_update.username} actualizado a '{user_to_update.get_role_display()}'.")
+    else:
+        messages.error(request, "Rol no válido.")
+
+    return redirect("admin_panel")
+
+@login_required
+@require_POST
+def user_toggle_status(request, pk):
+    """
+    Cambia el estado del usuario:
+    - Si está 'active' -> lo pasa a 'inactive'
+    - Si está 'inactive' o 'pending' -> lo pasa a 'active'
+    """
+    user_to_update = get_object_or_404(AppUser, pk=pk)
+
+    if user_to_update == request.user:
+        messages.error(request, "No puedes desactivar tu propio usuario.")
+        return redirect("admin_panel")
+
+    if user_to_update.status == 'active':
+        user_to_update.status = 'inactive'
+        messages.warning(request, f"Usuario {user_to_update.username} desactivado.")
+    else:
+        user_to_update.status = 'active'
+        messages.success(request, f"Usuario {user_to_update.username} activado.")
+    
+    user_to_update.save()
+    
+    return redirect("admin_panel")
 
 def logout(request):
     auth_logout(request)

@@ -29,4 +29,5 @@ urlpatterns = [
         name="content_delete",
     ),
     path("modules/<int:pk>/delete/", views.module_delete, name="module_delete"),
+    path('delete/<int:pk>/', views.user_delete, name='user_del'),
 ]
