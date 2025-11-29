@@ -1,7 +1,7 @@
 from accounts.models import AppUser
 from courses.models import Course, Content
 from enrollments.models import CourseInscription
-from learning_paths.models import LearningPath, CourseInPath
+from learning_paths.models import LearningPath
 from teams.models import TeamUser
 
 def get_courses_for_user(user: AppUser):

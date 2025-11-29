@@ -1,6 +1,5 @@
 from accounts.models import AppUser
 from learning_paths.models import LearningPath
-from enrollments.models import PathInscription
 from teams.models import TeamUser
 
 

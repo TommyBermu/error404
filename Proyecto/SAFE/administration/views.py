@@ -1,8 +1,7 @@
-from django.views.decorators.http import require_POST
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from courses.models import Course, Module, Content
+from courses.models import Course, Module
 from accounts.models import AppUser
 
 @login_required
