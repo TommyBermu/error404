@@ -64,8 +64,8 @@ Este proyecto utiliza Docker para facilitar la instalación y despliegue del sof
 
 1. **Clona el repositorio:**
     ```bash
-    git clone https://github.com/TommyBermu/SAFE.git
-    cd SAFE/Proyecto
+    git clone https://github.com/TommyBermu/error404.git
+    cd error404/Proyecto
     ```
 
 2. **Configura las variables de entorno (si es necesario):**
