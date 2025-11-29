@@ -34,6 +34,7 @@
               <th style="width:80px">ID</th>
               <th>Nombre</th>
               <th>Email</th>
+              <th>Rol</th>
               <th style="width:140px"></th>
             </tr>
           </thead>
@@ -44,6 +45,17 @@
                 <td>{{ u.username }}</td>
                 <td>{{ u.email }}</td>
                 <td>
+                  <form method="post" action="{% url 'user_change_role' u.id %}">
+                    {% csrf_token %}
+                    <select name="role" class="role-select">
+                      {% for value, label in role_choices %}
+                        <option value="{{ value }}" {% if u.role == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn-secondary">Actualizar</button>
+                  </form>
+                </td>
+                <td>
                   <form method="post" action="{% url 'user_del' u.id %}" style="display:inline">
                     {% csrf_token %}
                     <button type="submit" class="btn-danger" onclick="return confirm('¿Eliminar {{ u.username }}?')">Eliminar</button>
@@ -52,7 +64,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td class="empty" colspan="4">Sin usuarios</td>
+                <td class="empty" colspan="5">Sin usuarios</td>
               </tr>
             {% endfor %}
           </tbody>

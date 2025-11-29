@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.db import transaction
 from courses.models import Course, Module, Content, Exam
 from accounts.models import AppUser
+from accounts.services import change_role
 from django.contrib import messages
 from .forms import CourseForm, ModuleForm, ContentForm, MaterialForm
 
@@ -33,7 +34,7 @@ def admin_panel(request):
 
     learning_paths = []
 
-    usuarios = AppUser.objects.order_by("id").values("id", "username", "email")
+    usuarios = AppUser.objects.order_by("id")
 
     context = {
         "active_tab": active_tab,
@@ -42,6 +43,7 @@ def admin_panel(request):
         "selected_module": selected_module,
         "learning_paths": learning_paths,
         "usuarios": usuarios,
+        "role_choices": AppUser.UserRole.choices,
     }
     return render(request, "administration/admin_panel.html", context)
 
@@ -137,6 +139,23 @@ def course_update(request, pk):
         "administration/course_form.html",
         {"form": form, "title": "Editar Curso", "course": course},
     )
+
+
+@login_required
+@require_POST
+def user_change_role(request, user_id):
+    target_user = get_object_or_404(AppUser, pk=user_id)
+    new_role = request.POST.get("role", "")
+
+    success = change_role(request.user, target_user, new_role)
+    if not success:
+        return HttpResponse("No tienes permisos para realizar esta acción", status=403)
+
+    messages.success(
+        request,
+        f"Rol de {target_user.username} actualizado a {target_user.get_role_display()}",
+    )
+    return redirect(reverse("admin_panel") + "?tab=usuarios")
 
 
 @login_required
