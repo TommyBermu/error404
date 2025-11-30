@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from .models import AppUser
@@ -119,10 +120,78 @@ def user_add(request):
         })
         
     with transaction.atomic():
-        user = AppUser(username=username, email=email)
-        user.set_password(password)
-        user.save()
+            user = AppUser.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+            # Asignación manual de atributos
+            user.name = f"{first_name} {last_name}".strip()
+            user.first_name = first_name
+            user.last_name = last_name
+            
+            user.save()
+            
+    messages.success(request, "Registro exitoso. Por favor inicia sesión.")
     return redirect("login")
+
+@login_required
+@require_POST
+def admin_create_user(request):
+    username = request.POST.get("username", "").strip()
+    first_name = request.POST.get("first_name", "").strip()
+    last_name = request.POST.get("last_name", "").strip()
+    email = request.POST.get("email", "").strip()
+    role = request.POST.get("role", "colaborador") 
+    password = request.POST.get("password", "").strip()
+    confirm_password = request.POST.get("confirm_password", "").strip()
+
+    # --- Validaciones Básicas ---
+    if not (username and email and password):
+        messages.error(request, "Todos los campos obligatorios deben llenarse.")
+        return redirect("admin_panel")
+
+    if password != confirm_password:
+        messages.error(request, "Las contraseñas no coinciden.")
+        return redirect("admin_panel")
+
+    if AppUser.objects.filter(username=username).exists():
+        messages.error(request, f"El usuario '{username}' ya existe.")
+        return redirect("admin_panel")
+    
+    if not is_valid_password(password):
+        
+        msg = "La contraseña es muy débil. Requiere: 8 caracteres, mayúscula, minúscula, número y sin espacios."
+        messages.error(request, msg)
+        return redirect(reverse('admin_panel') + '?tab=usuarios')
+    # -------------------------------------------------------------
+
+    # --- Creación Segura ---
+    try:
+        with transaction.atomic():
+            user = AppUser.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+            # Asignación manual de atributos
+            user.name = f"{first_name} {last_name}".strip()
+            user.first_name = first_name
+            user.last_name = last_name
+            user.role = role
+            user.status = 'active'
+            
+            user.save()
+
+        messages.success(request, "Usuario creado con éxito.")
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        messages.error(request, f"Error del sistema: {e}")
+
+    return redirect(reverse('admin_panel') + '?tab=usuarios')
 
 @login_required
 @require_POST
@@ -149,7 +218,6 @@ def user_update_role(request, pk):
 
     return redirect("admin_panel")
 
-@login_required
 @require_POST
 def user_toggle_status(request, pk):
     """
@@ -161,7 +229,7 @@ def user_toggle_status(request, pk):
 
     if user_to_update == request.user:
         messages.error(request, "No puedes desactivar tu propio usuario.")
-        return redirect("admin_panel")
+        return redirect(reverse('admin_panel') + '?tab=usuarios')
 
     if user_to_update.status == 'active':
         user_to_update.status = 'inactive'
@@ -172,8 +240,10 @@ def user_toggle_status(request, pk):
     
     user_to_update.save()
     
-    return redirect("admin_panel")
+    return redirect(reverse('admin_panel') + '?tab=usuarios')
+
 
 def logout(request):
     auth_logout(request)
     return redirect("login")
+
