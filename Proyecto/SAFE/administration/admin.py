@@ -2,7 +2,8 @@ from django.contrib import admin
 
 # El usuario ya se registra en accounts/admin.py con UserAdmin personalizado.
 # Si se necesita registrar otros modelos de 'administration', agréguelos aquí.
-from accounts.models import AppUser, RoleChangeLog
+from accounts.models import AppUser
+from .models import RoleChangeLog
 
 @admin.register(AppUser)
 class AppUserAdmin(admin.ModelAdmin):

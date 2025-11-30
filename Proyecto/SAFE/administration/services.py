@@ -1,6 +1,7 @@
 from django.db import transaction
 
-from .models import AppUser, RoleChangeLog
+from accounts.models import AppUser
+from .models import RoleChangeLog
 
 
 def change_role(actor: AppUser, target: AppUser, new_role: str) -> bool:

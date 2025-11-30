@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.db import transaction
 from courses.models import Course, Module, Content, Exam
 from accounts.models import AppUser
-from accounts.services import change_role
+from administration.services import change_role
 from django.contrib import messages
 from .forms import CourseForm, ModuleForm, ContentForm, MaterialForm
 
