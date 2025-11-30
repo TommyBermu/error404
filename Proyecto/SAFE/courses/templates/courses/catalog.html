@@ -22,7 +22,7 @@
     {% if courses %}
       <div class="courses-grid">
         {% for course in courses %}
-          <div class="course-card">
+          <a class="course-card" href="{% url 'course_detail_accessible' course.id %}">
             <!-- Course Header Image -->
             <div class="course-card-header">
               {% if course.header_img %}
@@ -46,7 +46,7 @@
                 <span>{{ course.modules.count }} módulos</span>
               </div>
             </div>
-          </div>
+          </a>
         {% endfor %}
       </div>
     {% else %}

@@ -1,6 +1,16 @@
-from django.shortcuts import render, redirect
-from django.views.decorators.http import require_POST
-from . import models
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
+from enrollments.services import get_courses_for_user, get_paths_for_user
+
+
+@login_required
 def home(request):
-    return render(request, "enrollments/home.html")
+    """Dashboard básico de aprendizaje usando visibilidad RF5."""
+    courses = get_courses_for_user(request.user)
+    paths = get_paths_for_user(request.user)
+    return render(
+        request,
+        "enrollments/home.html",
+        {"courses": courses, "paths": paths},
+    )
