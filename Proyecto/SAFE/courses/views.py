@@ -1,19 +1,18 @@
-from django.views.decorators.http import require_POST
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from .models import Course, Module, Content, Exam, Assignment, Material
-from .forms import QuestionUploadForm
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-
-def catalog(request):
-    return render(request, "courses/catalog.html")
-
-
+from enrollments.services import (
+    get_contents_for_user_in_course,
+    get_courses_for_user,
+)
+from .forms import QuestionUploadForm
+from .models import Content, Course, Exam, Material, Module
 
 
 def parse_evaluacion(texto: str):
+    """Parsea preguntas tipo 'Q:' y opciones 'O:' desde un texto."""
     preguntas = []
     pregunta_actual = None
 
@@ -34,7 +33,7 @@ def parse_evaluacion(texto: str):
             pregunta_actual = {
                 "id": qid.strip(),
                 "texto": texto_preg.strip(),
-                "opciones": []
+                "opciones": [],
             }
 
         elif line.startswith("O:"):
@@ -46,11 +45,9 @@ def parse_evaluacion(texto: str):
 
             es_correcta = flag.strip() == "1"
 
-            pregunta_actual["opciones"].append({
-                "id": oid.strip(),
-                "texto": texto_opt.strip(),
-                "es_correcta": es_correcta
-            })
+            pregunta_actual["opciones"].append(
+                {"id": oid.strip(), "texto": texto_opt.strip(), "es_correcta": es_correcta}
+            )
 
         else:
             raise ValueError(f"Línea con formato inválido: {line}")
@@ -67,8 +64,6 @@ def parse_evaluacion(texto: str):
     return preguntas
 
 
-
-
 def is_txt_file(uploaded_file) -> bool:
     """
     Verifica si el archivo subido corresponde a un .txt
@@ -77,46 +72,62 @@ def is_txt_file(uploaded_file) -> bool:
     if not hasattr(uploaded_file, "name"):
         return False
     return uploaded_file.name.lower().endswith(".txt")
-# Importar la futura función que analizará el archivo
+
 
 def create_exam_view(request):
-    
-    if request.method == 'POST':
+    if request.method == "POST":
         form = QuestionUploadForm(request.POST, request.FILES)
 
         if form.is_valid():
-           
-            course = form.cleaned_data['course']
-            difficulty = form.cleaned_data['difficulty']
-            uploaded_file = form.cleaned_data['file']
-            
-            # --- 4. Lógica de Negocio (Pendiente) ---
-            # Aquí llamaremos a 'analyze_questions_file'
-            
-            messages.success(request, f"¡Formulario válido! Archivo '{uploaded_file.name}' listo para procesar.")
+            course = form.cleaned_data["course"]
+            difficulty = form.cleaned_data["difficulty"]
+            uploaded_file = form.cleaned_data["file"]
 
-           
-            return redirect('create_exam') 
-        
+            # Placeholder: aquí iría la lógica de negocio para analizar el .txt
+            messages.success(
+                request,
+                f"¡Formulario válido! Archivo '{uploaded_file.name}' listo para procesar.",
+            )
+
+            return redirect("create_exam")
         else:
             messages.error(request, "El formulario tiene errores. Por favor, revísalo.")
-    
+
     else:
-        
         form = QuestionUploadForm()
 
-   
-    return render(request, 'courses/create_exam.html', {
-        'form': form
-    })
-    
-    
+    return render(request, "courses/create_exam.html", {"form": form})
 
 
 @login_required
 def catalog(request):
-    courses = Course.objects.filter(status=Course.CourseStatus.ACTIVE).order_by(
-        "-created_at"
+    """Catálogo visible según el rol del usuario (RF5)."""
+    courses = get_courses_for_user(request.user).order_by("-created_at")
+    return render(request, "courses/catalog.html", {"courses": courses})
+
+
+@login_required
+def course_detail_accessible(request, pk):
+    """Detalle de curso respetando visibilidad de contenidos por rol (RF5)."""
+    course = get_object_or_404(Course, pk=pk)
+
+    visible_contents = get_contents_for_user_in_course(request.user, course)
+    modules = (
+        Module.objects.filter(course=course)
+        .prefetch_related("contents", "contents__material", "contents__exam")
+        .order_by("id")
     )
 
-    return render(request, "courses/catalog.html", {"courses": courses})
+    contents_by_module = {module.id: [] for module in modules}
+    for content in visible_contents:
+        contents_by_module.setdefault(content.module_id, []).append(content)
+
+    modules_with_contents = [
+        (module, contents_by_module.get(module.id, [])) for module in modules
+    ]
+
+    context = {
+        "course": course,
+        "modules_with_contents": modules_with_contents,
+    }
+    return render(request, "courses/course_detail_accessible.html", context)

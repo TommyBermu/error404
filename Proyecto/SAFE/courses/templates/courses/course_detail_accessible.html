@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.name }} - SAFE{% endblock %}
+
+{% block extra_css %}
+  <style>
+    .course-header { display:flex; gap:16px; align-items:center; margin-bottom:24px; }
+    .course-header img { width:120px; height:120px; object-fit:cover; border-radius:12px; border:1px solid #e5e7eb; }
+    .chip { display:inline-block; padding:4px 10px; border-radius:999px; background:#f3f4f6; font-size:12px; margin-right:6px; }
+    .module-card { border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px; background:white; }
+    .content-card { border:1px solid #e5e7eb; border-radius:10px; padding:10px; margin-top:8px; background:#f9fafb; }
+    .muted { color:#6b7280; }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="course-header">
+      {% if course.header_img %}
+        <img src="{{ course.header_img.url }}" alt="{{ course.name }}">
+      {% else %}
+        <div style="width:120px;height:120px;border-radius:12px;border:1px solid #e5e7eb;display:grid;place-items:center;">📚</div>
+      {% endif %}
+      <div>
+        <h1>{{ course.name }}</h1>
+        <p class="muted">{{ course.description|default:"Sin descripción" }}</p>
+        <div>
+          <span class="chip">{{ course.get_status_display }}</span>
+          <span class="chip">{{ course.duration_hours|default:"0" }}h</span>
+          <span class="chip">{{ modules|length }} módulo(s)</span>
+        </div>
+      </div>
+    </div>
+
+    {% if modules_with_contents %}
+      {% for module, contents in modules_with_contents %}
+        <div class="module-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:600;">Módulo {{ forloop.counter }}: {{ module.name }}</div>
+              <div class="muted" style="font-size:13px;">{{ module.description|default:"Sin descripción" }}</div>
+            </div>
+            <div class="chip">{{ module.contents.count }} contenido(s)</div>
+          </div>
+
+          {% if contents %}
+            {% for content in contents %}
+              <div class="content-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div style="font-weight:600;">{{ content.title }}</div>
+                  <span class="chip">{{ content.get_block_type_display }}</span>
+                </div>
+                <div class="muted" style="font-size:13px;margin-top:6px;">
+                  {{ content.description|default:"Sin descripción" }}
+                </div>
+                {% if content.is_mandatory %}
+                  <div class="chip" style="background:#fef3c7;color:#92400e;">Obligatorio</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="muted" style="margin-top:8px;">No hay contenidos visibles para tu rol en este módulo.</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="muted">Este curso aún no tiene módulos.</p>
+    {% endif %}
+  </div>
+{% endblock %}
