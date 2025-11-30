@@ -5,6 +5,7 @@ from django.db.models import Count, Prefetch, Q
 
 from accounts.models import AppUser
 from courses.models import Course, Content, Module
+from courses.services import get_ordered_modules
 from enrollments.models import ContentProgress, CourseInscription
 from learning_paths.models import LearningPath
 from teams.models import TeamUser
@@ -88,7 +89,9 @@ def get_contents_for_user_in_course(user: AppUser, course: Course):
 
     # 1. Analista TH: can see everything
     if user.role == AppUser.UserRole.ANALISTA_TH:
-        return Content.objects.filter(module__course=course)
+        return Content.objects.filter(module__course=course).order_by(
+            "module_id", "order", "id"
+        )
 
     # 2. Supervisor: can see everything only if their team is enrolled
     if user.role == AppUser.UserRole.SUPERVISOR:
@@ -97,7 +100,9 @@ def get_contents_for_user_in_course(user: AppUser, course: Course):
         if CourseInscription.objects.filter(
             app_user_id__in=team_members, course=course
         ).exists():
-            return Content.objects.filter(module__course=course)
+            return Content.objects.filter(module__course=course).order_by(
+                "module_id", "order", "id"
+            )
 
         return Content.objects.none()
 
@@ -107,11 +112,7 @@ def get_contents_for_user_in_course(user: AppUser, course: Course):
             return Content.objects.none()
 
         completed_ids = _completed_ids_for(user, course)
-        modules = list(
-            Module.objects.filter(course=course)
-            .prefetch_related("contents")
-            .order_by("id")
-        )
+        modules = get_ordered_modules(course)
 
         unlocked_module_ids = set()
         previous_completed = True  # first module unlocked
@@ -130,7 +131,7 @@ def get_contents_for_user_in_course(user: AppUser, course: Course):
             Content.objects.filter(
                 module__course=course, module_id__in=unlocked_module_ids
             )
-            .order_by("module_id", "id")
+            .order_by("module_id", "order", "id")
         )
 
     return Content.objects.none()
