@@ -31,8 +31,8 @@ urlpatterns = [
     path("modules/<int:pk>/delete/", views.module_delete, name="module_delete"),
     path('delete/<int:pk>/', views.user_delete, name='user_del'),
     path(
-        "modules/<int:module_pk>/exam/create/",
-        views.create_exam_from_file,
-        name="create_exam_from_file",
+        "course/<int:course_pk>/exam/create/",
+        views.create_exam_for_course,
+        name="create_exam_for_course",
     ),
 ]

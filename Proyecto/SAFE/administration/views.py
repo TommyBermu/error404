@@ -7,7 +7,7 @@ from django.db import transaction
 from courses.models import Course, Module, Content, Exam
 from accounts.models import AppUser
 from django.contrib import messages
-from .forms import CourseForm, ModuleForm, ContentForm, MaterialForm
+from .forms import CourseForm, ExamUploadForm, ModuleForm, ContentForm, MaterialForm
 
 
 @login_required
@@ -444,62 +444,71 @@ def user_delete(request, pk):
     # Redirigimos al panel de administración (asegúrate que 'admin_panel' sea el name en administration/urls.py)
     return redirect("admin_panel")
 
+# administration/views.py
+
 @login_required
 @require_POST
-def create_exam_from_file(request, module_pk):
+def create_exam_for_course(request, course_pk):
     """
-    Procesa la carga masiva de un examen y lo asigna a un módulo.
+    Recibe un archivo .txt, valida su extensión y crea un Examen
+    dentro de un módulo automático llamado 'Examen'.
     """
-    module = get_object_or_404(Module, pk=module_pk)
+    course = get_object_or_404(Course, pk=course_pk)
     
-    # URL de retorno para volver a la misma pestaña/módulo
-    redirect_url = reverse("course_detail", kwargs={"pk": module.course.pk}) + f"?module={module.pk}"
+    # 1.Buscar o Crear el módulo "Examen"
+    exam_module, created = Module.objects.get_or_create(
+        course=course,
+        name="Examen",
+        defaults={
+            'description': 'Módulo dedicado a las evaluaciones del curso.',
+            # Si tienes un campo 'order' o 'duration', puedes poner defaults aquí
+        }
+    )
 
     form = ExamUploadForm(request.POST, request.FILES)
 
     if form.is_valid():
         uploaded_file = request.FILES['file']
         title = form.cleaned_data['title']
-        difficulty = form.cleaned_data['difficulty'] # Por ahora no lo guardamos en DB, pero podríamos.
+        difficulty = form.cleaned_data['difficulty']
+
+        # 2. Validación de extensión (Backend)
+        if not uploaded_file.name.lower().endswith('.txt'):
+            messages.error(request, "Error: El archivo debe ser tipo .txt")
+            return redirect("course_detail", pk=course.pk)
 
         try:
-            # 1. Leer el archivo (viene en bytes, hay que decodificar)
-            file_text = uploaded_file.read().decode('utf-8')
-            
-            # 2. Parsear
-            questions_data = parse_evaluacion(file_text)
-            
             with transaction.atomic():
                 # 3. Crear el objeto Exam
+                # Como el parseo es un requerimiento futuro, 
+                # inicializamos questions como una lista vacía por ahora.
                 exam = Exam.objects.create(
-                    questions=questions_data,
-                    total_questions=len(questions_data),
-                    # passing_score = 60, # Puedes definir default o pedirlo en el form
-                    # max_tries = 3
+                    questions=[], 
+                    total_questions=0,
+                    passing_score=60, # Valor por defecto
+                    max_tries=3       # Valor por defecto
                 )
 
-                # 4. Crear el objeto Content vinculado al Módulo y al Exam
+                # 4. Crear el Contenido vinculado al módulo "Examen"
                 Content.objects.create(
-                    module=module,
+                    module=exam_module,
                     title=title,
-                    description=f"Examen cargado masivamente. Dificultad: {difficulty}",
+                    description=f"Examen importado desde archivo: {uploaded_file.name}. Dificultad: {difficulty}",
                     content_type=Content.ContentType.EXAM,
-                    block_type=Content.BlockType.QUIZ, # Ojo: Usamos QUIZ para que el frontend lo renderice
+                    block_type=Content.BlockType.QUIZ,
                     exam=exam,
-                    is_mandatory=True # Por defecto obligatorio, o pedir en form
+                    is_mandatory=True
                 )
 
-            messages.success(request, f"Examen '{title}' creado exitosamente con {len(questions_data)} preguntas.")
+            messages.success(request, f"Archivo '{uploaded_file.name}' recibido y examen '{title}' creado en el módulo 'Examen'.")
 
-        except ValueError as e:
-            messages.error(request, f"Error de formato en el archivo: {str(e)}")
         except Exception as e:
-            messages.error(request, f"Error inesperado: {str(e)}")
+            messages.error(request, f"Error al procesar el examen: {str(e)}")
             
     else:
-        # Errores del formulario (ej. extensión incorrecta)
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(request, f"{field}: {error}")
 
-    return redirect(redirect_url)
+    # Redirigir al curso, abriendo específicamente el módulo de exámenes
+    return redirect(reverse("course_detail", kwargs={"pk": course.pk}) + f"?module={exam_module.pk}")
