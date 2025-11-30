@@ -61,6 +61,7 @@
 
   <div class="container course-body">
       <div class="course-layout">
+        
         <section class="modules-panel">
           <div class="section-header">
             <h2 class="section-title">Módulos</h2>
@@ -109,6 +110,7 @@
                       <button type="button" class="btn btn-secondary" data-carousel-btn="next">▼</button>
                     </div>
                   </div>
+                  
                   <div class="content-notebook" id="content-notebook">
                     {% for content in module_contents %}
                       <article id="content-block-{{ content.pk }}" class="content-block content-block--{{ content.block_type }} {% if selected_content and selected_content.pk == content.pk %}is-active{% endif %}">
@@ -119,19 +121,12 @@
                           </div>
                           <div class="content-block__tags">
                             <span class="content-type-pill">
-                              {% if content.block_type == 'text' %}
-                                Texto
-                              {% elif content.block_type == 'image' %}
-                                Imagen
-                              {% elif content.block_type == 'video' %}
-                                Video
-                              {% elif content.block_type == 'pdf' %}
-                                PDF
-                              {% elif content.block_type == 'quiz' %}
-                                Cuestionario
-                              {% else %}
-                                Contenido
-                              {% endif %}
+                              {% if content.block_type == 'text' %}Texto
+                              {% elif content.block_type == 'image' %}Imagen
+                              {% elif content.block_type == 'video' %}Video
+                              {% elif content.block_type == 'pdf' %}PDF
+                              {% elif content.block_type == 'quiz' %}Cuestionario
+                              {% else %}Contenido{% endif %}
                             </span>
                             {% if content.is_mandatory %}
                               <span class="mandatory-chip">Obligatorio</span>
@@ -151,7 +146,7 @@
                           {% elif content.block_type == 'video' %}
                             {% if content.material and content.material.file %}
                               <video controls class="content-video">
-                                <source src="{{ content.material.file.url }}" type="video/{{ content.material.type|default:'mp4' }}" />Tu navegador no soporta video HTML5.
+                                <source src="{{ content.material.file.url }}" type="video/{{ content.material.type|default:'mp4' }}" />
                               </video>
                             {% else %}
                               <p class="content-empty">Video no disponible.</p>
@@ -167,13 +162,11 @@
                             {% endif %}
                           {% elif content.block_type == 'quiz' %}
                             {% if selected_content and selected_content.pk == content.pk %}
-                              <!-- Modo edición inline -->
                               <div class="quiz-edit-inline" id="quiz-editor-{{ content.pk }}">
                                 <div id="questions-container-inline"></div>
                                 <button type="button" class="btn-secondary-small" onclick="addQuestionInline()" style="margin-top: 16px;">+ Agregar pregunta</button>
                               </div>
                             {% elif content.exam and content.exam.questions %}
-
                                 {% for question in content.exam.questions %}
                                   <div class="quiz-question-preview">
                                     <div class="question-preview-header">
@@ -191,14 +184,9 @@
                                     </div>
                                   </div>
                                 {% endfor %}
-
-                            {% elif content.exam %}
-                              <p class="content-empty">Aún no hay preguntas para este cuestionario.</p>
                             {% else %}
                               <p class="content-empty">Crea un cuestionario para este bloque.</p>
                             {% endif %}
-                          {% else %}
-                            <p class="content-empty">No hay vista disponible para este bloque.</p>
                           {% endif %}
                         </div>
 
@@ -211,73 +199,7 @@
                         </div>
 
                         {% if selected_content and selected_content.pk == content.pk and content_edit_form %}
-                          {% if selected_content.block_type == 'quiz' %}
-                            <!-- Formulario simplificado para cuestionarios -->
-                            <form method="post" action="{% url 'content_update' selected_content.pk %}" class="quiz-inline-form" data-content-form>
-                              {% csrf_token %}
-                              <input type="hidden" name="next" value="{% url 'course_detail' course.pk %}?module={{ selected_module.pk }}#content-block-{{ content.pk }}">
-                              <div class="form-field">
-                                <label>Título del cuestionario</label>
-                                {{ content_edit_form.title }}
-                              </div>
-                              <input type="hidden" name="quiz_questions" id="quiz_questions_inline" value="[]">
-                              {% if selected_content.exam and selected_content.exam.questions %}
-                                {{ selected_content.exam.questions|json_script:"existing-questions-data" }}
-                              {% endif %}
-                              <input type="hidden" name="block_type" value="quiz">
-                              <input type="hidden" name="is_mandatory" value="{{ selected_content.is_mandatory|yesno:'true,false' }}">
-                              <div class="content-form__actions">
-                                <button type="submit" class="btn-primary">Actualizar bloque</button>
-                                <button type="button" class="btn-danger" onclick="if(confirm('¿Eliminar {{ selected_content.title }}?')) { document.getElementById('delete-form-{{ selected_content.pk }}').submit(); }">Eliminar contenido</button>
-                              </div>
-                            </form>
-                            <form id="delete-form-{{ selected_content.pk }}" method="post" action="{% url 'content_delete' selected_content.pk %}" style="display: none;">
-                              {% csrf_token %}
-                            </form>
-                          {% else %}
-                            <!-- Formulario normal para otros tipos -->
-                            <form method="post" enctype="multipart/form-data" action="{% url 'content_update' selected_content.pk %}" class="content-form inline-editor" data-content-form>
-                              {% csrf_token %}
-                              <input type="hidden" name="next" value="{% url 'course_detail' course.pk %}?module={{ selected_module.pk }}#content-block-{{ content.pk }}">
-                              <div class="form-grid">
-                                <div class="form-field form-field-title">
-                                  <label>Título</label>
-                                  {{ content_edit_form.title }}
-                                </div>
-                                <div class="form-field form-field-type">
-                                  <label>Tipo de bloque</label>
-                                  {{ content_edit_form.block_type }}
-                                </div>
-                                <div class="form-field checkbox-field form-field-inline">
-                                  <label class="checkbox-label">
-                                    {{ content_edit_form.is_mandatory }}
-                                    <span>Obligatorio</span>
-                                  </label>
-                                </div>
-                                <div class="form-field form-field-full">
-                                  <label>Texto</label>
-                                  {{ content_edit_form.description }}
-                                </div>
-                                <div class="form-field form-field-full file-field" data-file-field>
-                                  <label>Archivo (imagen/video/pdf)</label>
-                                  <div class="file-input-wrapper">{{ material_edit_form.file }}</div>
-                                  <div class="file-hint-row">
-                                    <small class="field-hint">Solo para bloques multimedia.</small>
-                                    {% if selected_content.material and selected_content.material.file %}
-                                      <a href="{{ selected_content.material.file.url }}" target="_blank" rel="noopener" class="link-small">Ver archivo actual</a>
-                                    {% endif %}
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="content-form__actions">
-                                <button type="submit" class="btn-primary">Actualizar bloque</button>
-                                <button type="button" class="btn-danger" onclick="if(confirm('¿Eliminar {{ selected_content.title }}?')) { document.getElementById('delete-form-{{ selected_content.pk }}').submit(); }">Eliminar contenido</button>
-                              </div>
-                            </form>
-                            <form id="delete-form-{{ selected_content.pk }}" method="post" action="{% url 'content_delete' selected_content.pk %}" style="display: none;">
-                              {% csrf_token %}
-                            </form>
-                          {% endif %}
+                           <form id="delete-form-{{ selected_content.pk }}" method="post" action="{% url 'content_delete' selected_content.pk %}" style="display: none;">{% csrf_token %}</form>
                         {% endif %}
                       </article>
                     {% empty %}
@@ -311,10 +233,7 @@
                                 {{ content_form.block_type }}
                               </div>
                               <div class="form-field checkbox-field form-field-inline">
-                                <label class="checkbox-label">
-                                  {{ content_form.is_mandatory }}
-                                  <span>Obligatorio</span>
-                                </label>
+                                <label class="checkbox-label">{{ content_form.is_mandatory }} <span>Obligatorio</span></label>
                               </div>
                               <div class="form-field form-field-full">
                                 <label>Texto</label>
@@ -324,10 +243,8 @@
                                 <label>Archivo (imagen/video/pdf)</label>
                                 {{ material_form.expected_type }}
                                 <div class="file-input-wrapper">{{ material_form.file }}</div>
-                                <small class="field-hint">El tipo se determina automáticamente según el "Tipo de bloque" seleccionado arriba.</small>
+                                <small class="field-hint">El tipo se determina automáticamente.</small>
                               </div>
-                              
-                              <!-- Editor de preguntas para cuestionarios -->
                               <div class="form-field form-field-full quiz-editor" data-quiz-editor style="display: none;">
                                 <label>Preguntas del cuestionario</label>
                                 <div id="questions-container"></div>
@@ -346,37 +263,190 @@
                 </div>
               </div>
 
+              <div class="add-content-wrapper" style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 30px;">
+                
+                <h3 class="content-block__title" style="margin-bottom: 16px; color: var(--safe-ink2); text-transform: uppercase; font-size: 12px; letter-spacing: 0.08em;">
+                  Herramientas avanzadas
+                </h3>
+
+                <article class="content-block content-block--new">
+                  <div class="content-block__header">
+                    <div>
+                      <h3 class="content-block__title">Carga masiva de Examen</h3>
+                      <p class="content-block__order" style="margin-top:4px; text-transform: none; color: var(--safe-ink2);">
+                        Crea un examen completo importando un archivo .txt
+                      </p>
+                    </div>
+                  </div>
+
+                  <form method="post" enctype="multipart/form-data" action="{% url 'create_exam_from_file' selected_module.pk %}" class="content-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-grid">
+                      
+                      <div class="form-field form-field-title">
+                        <label class="label">Título del Examen</label>
+                        <input type="text" name="title" required placeholder="Ej. Evaluación Final - Módulo 1">
+                      </div>
+
+                      <div class="form-field form-field-type">
+                        <label class="label">Nivel de Dificultad</label>
+                        <select name="difficulty">
+                          <option value="facil">Fácil</option>
+                          <option value="media" selected>Media</option>
+                          <option value="dificil">Difícil</option>
+                        </select>
+                      </div>
+
+                      <div class="form-field form-field-full">
+                        <label class="label">Archivo de preguntas (.txt)</label>
+                        
+                        <input type="file" name="file" id="exam-file-input" accept=".txt" style="display: none;" onchange="updateFileName(this)">
+                        
+                        <label for="exam-file-input" class="drop-zone" id="exam-drop-zone" style="background: #fff;">
+                          <div class="drop-zone-icon" style="font-size: 32px; margin-bottom: 8px;">📁</div>
+                          <span id="file-name-text" style="color: var(--safe-ink2); font-size: 14px;">
+                            Arrastra tu archivo <strong>.txt</strong> aquí o haz clic para buscar
+                          </span>
+                          <button type="button" class="btn-secondary btn-small" style="margin-top: 12px; pointer-events: none;">
+                            Seleccionar archivo
+                          </button>
+                        </label>
+                      </div>
+
+                    </div>
+
+                    <div class="content-form__actions">
+                      <button type="submit" class="btn-primary" style="width: 100%;">Crear examen</button>
+                    </div>
+                  </form>
+                </article>
+              </div>
+
+              <script>
+                // 1. Control del Modal JS
+                function showJsError(message) {
+                  const modal = document.getElementById('jsFeedbackModal');
+                  const textElement = document.getElementById('jsFeedbackText');
+                  
+                  if (modal && textElement) {
+                    textElement.textContent = message;
+                    modal.style.display = 'flex';
+                  }
+                }
+
+                function closeJsModal() {
+                  const modal = document.getElementById('jsFeedbackModal');
+                  if (modal) {
+                    modal.style.display = 'none';
+                  }
+                }
+
+                // 2. Lógica de Archivo
+                function updateFileName(input) {
+                  const textSpan = document.getElementById('file-name-text');
+                  
+                  if (input.files && input.files.length > 0) {
+                    const file = input.files[0];
+                    const fileName = file.name.toLowerCase();
+
+                    // VALIDACIÓN: ¿Termina en .txt?
+                    if (!fileName.endsWith('.txt')) {
+                      showJsError("El tipo de archivo no es válido. Solo puede subir archivos .txt");
+                      input.value = ''; // Limpiar input
+                      textSpan.innerHTML = `Arrastra tu archivo <strong>.txt</strong> aquí o haz clic para buscar`;
+                      textSpan.style.color = "#6b7280"; // Gris
+                      return;
+                    }
+
+                    // ÉXITO
+                    textSpan.innerHTML = "Archivo seleccionado: <strong style='color: var(--safe-gold);'>" + file.name + "</strong>";
+                    textSpan.style.color = "var(--safe-ink)";
+                  }
+                }
+
+                document.addEventListener('DOMContentLoaded', function() {
+                    const dropZone = document.getElementById('exam-drop-zone');
+                    if (!dropZone) return;
+
+                    ['dragenter', 'dragover'].forEach(eventName => {
+                      dropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        dropZone.style.backgroundColor = '#fefce8';
+                        dropZone.style.borderColor = '#d4af37';
+                      }, false);
+                    });
+
+                    ['dragleave', 'drop'].forEach(eventName => {
+                      dropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        dropZone.style.backgroundColor = '#fff';
+                        dropZone.style.borderColor = '#e5e7eb';
+                      }, false);
+                    });
+
+                    dropZone.addEventListener('drop', (e) => {
+                      e.preventDefault();
+                      const dt = e.dataTransfer;
+                      const files = dt.files;
+                      const input = document.getElementById('exam-file-input');
+                      
+                      if (files.length > 0) {
+                          input.files = files;
+                          updateFileName(input);
+                      }
+                    });
+                });
+              </script>
+
           {% else %}
             <div class="empty-state-small">Selecciona un módulo a la izquierda para ver y agregar contenidos.</div>
           {% endif %}
         </section>
       </div>
+  </div>
 
-    <!-- Reuse delete modal (if not already present globally) -->
-    <div id="delete-modal" class="confirm-overlay" style="display:none;">
-      <div class="confirm-card">
-        <div class="warning-icon">⚠️</div>
-        <h1 class="confirm-title">¿Eliminar?</h1>
-
-        <div id="delete-entity-info" class="course-info">
-          <h2 id="delete-entity-name" class="course-name"></h2>
-          <div id="delete-entity-meta" class="course-meta"></div>
-        </div>
-
-        <div class="warning-box">
-          <strong>⚠️ Esta acción no se puede deshacer</strong>
-          <p>Al eliminar esto, se eliminarán todos los elementos asociados.</p>
-        </div>
-
-        <form id="delete-form" method="post" action="">
-          {% csrf_token %}
-          <div class="form-actions">
-            <button type="button" id="delete-cancel" class="btn-secondary">← Cancelar</button>
-            <button type="submit" class="btn-danger">🗑️ Sí, eliminar</button>
-          </div>
-        </form>
+  <div id="jsFeedbackModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content feedback-content">
+      
+      <div class="feedback-icon icon-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
       </div>
+
+      <h3 class="feedback-title">Atención</h3>
+      <p class="feedback-text" id="jsFeedbackText">Mensaje por defecto</p>
+
+      <button type="button" class="btn btn-primary btn-wide" onclick="closeJsModal()">
+        Aceptar
+      </button>
+
     </div>
+  </div>
+
+  <div id="delete-modal" class="confirm-overlay" style="display:none;">
+    <div class="confirm-card">
+      <div class="warning-icon">⚠️</div>
+      <h1 class="confirm-title">¿Eliminar?</h1>
+      <div id="delete-entity-info" class="course-info">
+        <h2 id="delete-entity-name" class="course-name"></h2>
+        <div id="delete-entity-meta" class="course-meta"></div>
+      </div>
+      <div class="warning-box">
+        <strong>⚠️ Esta acción no se puede deshacer</strong>
+        <p>Al eliminar esto, se eliminarán todos los elementos asociados.</p>
+      </div>
+      <form id="delete-form" method="post" action="">
+        {% csrf_token %}
+        <div class="form-actions">
+          <button type="button" id="delete-cancel" class="btn-secondary">← Cancelar</button>
+          <button type="submit" class="btn-danger">🗑️ Sí, eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
     <script>
       // Validación de cuestionarios
@@ -995,4 +1065,23 @@
       });
     </script>
   </div>
+  <div id="jsFeedbackModal" class="modal-backdrop" style="display: none;">
+  <div class="modal-content feedback-content">
+    
+    <div class="feedback-icon icon-warning">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+
+    <h3 class="feedback-title">Atención</h3>
+    <p class="feedback-text" id="jsFeedbackText">Mensaje por defecto</p>
+
+    <button type="button" class="btn btn-primary btn-wide" onclick="closeJsModal()">
+      Aceptar
+    </button>
+
+  </div>
+</div>
 {% endblock %}

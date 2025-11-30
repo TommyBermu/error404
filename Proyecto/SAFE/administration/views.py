@@ -443,3 +443,63 @@ def user_delete(request, pk):
     
     # Redirigimos al panel de administración (asegúrate que 'admin_panel' sea el name en administration/urls.py)
     return redirect("admin_panel")
+
+@login_required
+@require_POST
+def create_exam_from_file(request, module_pk):
+    """
+    Procesa la carga masiva de un examen y lo asigna a un módulo.
+    """
+    module = get_object_or_404(Module, pk=module_pk)
+    
+    # URL de retorno para volver a la misma pestaña/módulo
+    redirect_url = reverse("course_detail", kwargs={"pk": module.course.pk}) + f"?module={module.pk}"
+
+    form = ExamUploadForm(request.POST, request.FILES)
+
+    if form.is_valid():
+        uploaded_file = request.FILES['file']
+        title = form.cleaned_data['title']
+        difficulty = form.cleaned_data['difficulty'] # Por ahora no lo guardamos en DB, pero podríamos.
+
+        try:
+            # 1. Leer el archivo (viene en bytes, hay que decodificar)
+            file_text = uploaded_file.read().decode('utf-8')
+            
+            # 2. Parsear
+            questions_data = parse_evaluacion(file_text)
+            
+            with transaction.atomic():
+                # 3. Crear el objeto Exam
+                exam = Exam.objects.create(
+                    questions=questions_data,
+                    total_questions=len(questions_data),
+                    # passing_score = 60, # Puedes definir default o pedirlo en el form
+                    # max_tries = 3
+                )
+
+                # 4. Crear el objeto Content vinculado al Módulo y al Exam
+                Content.objects.create(
+                    module=module,
+                    title=title,
+                    description=f"Examen cargado masivamente. Dificultad: {difficulty}",
+                    content_type=Content.ContentType.EXAM,
+                    block_type=Content.BlockType.QUIZ, # Ojo: Usamos QUIZ para que el frontend lo renderice
+                    exam=exam,
+                    is_mandatory=True # Por defecto obligatorio, o pedir en form
+                )
+
+            messages.success(request, f"Examen '{title}' creado exitosamente con {len(questions_data)} preguntas.")
+
+        except ValueError as e:
+            messages.error(request, f"Error de formato en el archivo: {str(e)}")
+        except Exception as e:
+            messages.error(request, f"Error inesperado: {str(e)}")
+            
+    else:
+        # Errores del formulario (ej. extensión incorrecta)
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f"{field}: {error}")
+
+    return redirect(redirect_url)
