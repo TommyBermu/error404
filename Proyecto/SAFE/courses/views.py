@@ -19,20 +19,6 @@ from .services import get_ordered_contents, get_ordered_modules
 from .models import Content, Course, Exam, Material, Module
 
 
-def _to_json_safe(value):
-    """
-    Convierte estructuras anidadas (listas, diccionarios, sets) a una forma
-    segura para JSONField (los sets se transforman en listas).
-    """
-    if isinstance(value, set):
-        return [_to_json_safe(v) for v in value]
-    if isinstance(value, list):
-        return [_to_json_safe(v) for v in value]
-    if isinstance(value, dict):
-        return {k: _to_json_safe(v) for k, v in value.items()}
-    return value
-
-
 def parse_evaluacion(texto: str):
     """Parsea preguntas tipo 'Q:' y opciones 'O:' desde un texto."""
     preguntas = []
@@ -84,7 +70,6 @@ def parse_evaluacion(texto: str):
             raise ValueError(f"La pregunta '{p['id']}' no tiene opción correcta")
 
     return preguntas
-
 
 
 def is_txt_file(uploaded_file) -> bool:
@@ -356,9 +341,7 @@ def take_exam(request, content_pk):
     submitted = {}
     for q in questions:
         qid = q.get("id")
-        # Guardar siempre listas; la lógica de corrección
-        # internamente convierte a set cuando lo necesita.
-        submitted[qid] = request.POST.getlist(f"q-{qid}")
+        submitted[qid] = set(request.POST.getlist(f"q-{qid}"))
 
     correct_count, total, results = evaluate_exam_submission(questions, submitted)
 
@@ -373,8 +356,7 @@ def take_exam(request, content_pk):
             content=content, course_inscription=inscription
         )
         progress.score = correct_count
-        # Asegurar que lo que guardamos en JSONField sea 100% serializable.
-        progress.results = _to_json_safe(results)
+        progress.results = results
         progress.is_completed = True
         progress.completed_at = timezone.now()
         progress.save(update_fields=["score", "results", "is_completed", "completed_at"])
@@ -414,10 +396,7 @@ def normalize_exam_questions(exam: Exam):
                 continue
             qid = str(q.get("id") or q.get("question_id") or idx)
             text = q.get("text") or q.get("texto") or q.get("question") or ""
-            # Soportar distintos formatos de almacenamiento:
-            # - "options" / "opciones" (formatos previos)
-            # - "answers" (formato usado por el editor de cuestionarios en administración)
-            options = q.get("options") or q.get("opciones") or q.get("answers") or []
+            options = q.get("options") or q.get("opciones") or []
             norm_opts = []
             if isinstance(options, list):
                 for o_idx, opt in enumerate(options):
@@ -460,9 +439,7 @@ def evaluate_exam_submission(questions, submitted_answers):
 
     for q in questions:
         qid = q.get("id")
-        # Convertir la selección del usuario a set solo para comparar,
-        # pero no guardar sets en los resultados (JSONField).
-        selected = set(submitted_answers.get(qid, []))
+        selected = set(submitted_answers.get(qid, set()))
         correct_ids = {opt["id"] for opt in q.get("options", []) if opt.get("is_correct")}
 
         is_correct = selected == correct_ids and (correct_ids or not selected)
